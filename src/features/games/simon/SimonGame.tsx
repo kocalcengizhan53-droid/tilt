@@ -119,7 +119,7 @@ function Pad({ index, colour, size, glow, lit, live, onPress }: { index: number;
       accessibilityRole="button"
       accessibilityLabel={`Pad ${index + 1}${lit ? ', lit' : ''}`}
       accessibilityState={{ disabled: !live }}
-      onPressIn={onPress}
+      onPress={onPress}
       style={{ width: size, height: size }}
     >
       <Animated.View

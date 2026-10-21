@@ -42,6 +42,11 @@ export function GameShell({ meta }: { meta: GameMeta }) {
     };
   }, [meta]);
 
+  const leave = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
+
   const start = () => {
     setScore(0);
     setResult(null);
@@ -77,7 +82,7 @@ export function GameShell({ meta }: { meta: GameMeta }) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back to the cabinet"
-          onPress={() => router.back()}
+          onPress={leave}
           className="min-h-11 min-w-11 items-start justify-center active:opacity-60"
         >
           <Text className="text-base text-muted-foreground">← Cabinet</Text>
@@ -135,7 +140,7 @@ export function GameShell({ meta }: { meta: GameMeta }) {
               )}
               <View className="mt-4 flex-row gap-3">
                 <Button label="Play again" colour={meta.colour} onPress={start} />
-                <Button label="Cabinet" ghost onPress={() => router.back()} />
+                <Button label="Cabinet" ghost onPress={leave} />
               </View>
             </Animated.View>
           </Overlay>

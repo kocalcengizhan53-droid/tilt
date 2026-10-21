@@ -14,6 +14,7 @@ type Store = {
 
 function nativeStore(): Store {
   // Required lazily so the web bundle never evaluates expo-sqlite.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Storage = require('expo-sqlite/kv-store').default as {
     getItemSync(key: string): string | null;
     setItemSync(key: string, value: string): void;
