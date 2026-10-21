@@ -41,3 +41,9 @@ example
 # generated native folders
 /ios
 /android
+
+# generated
+expo-env.d.ts
+dist/
+qa-output/
+.wrangler/

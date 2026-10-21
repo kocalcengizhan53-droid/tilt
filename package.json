@@ -1,18 +1,22 @@
 {
   "name": "tilt",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index",
   "dependencies": {
     "@expo/ui": "~58.0.22",
+    "@shopify/react-native-skia": "2.14.0",
     "expo": "~58.0.17",
+    "expo-audio": "~58.0.10",
     "expo-constants": "~58.0.13",
     "expo-device": "~58.0.5",
     "expo-font": "~58.0.9",
     "expo-glass-effect": "~58.0.4",
+    "expo-haptics": "~58.0.7",
     "expo-image": "~58.0.16",
     "expo-linking": "~58.0.14",
     "expo-router": "~58.0.25",
     "expo-splash-screen": "~58.0.11",
+    "expo-sqlite": "~58.0.13",
     "expo-status-bar": "~58.0.4",
     "expo-symbols": "~58.0.4",
     "expo-system-ui": "~58.0.6",
@@ -25,19 +29,49 @@
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
     "react-native-web": "~0.21.4",
-    "react-native-worklets": "0.13.0"
+    "react-native-worklets": "0.13.0",
+    "tailwindcss": "^4.3.3",
+    "uniwind": "^1.13.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "30.0.0",
     "@types/react": "~19.3.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~58.0.4",
+    "jest": "~30.5.2",
+    "jest-expo": "~58.0.12",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "node -e \"require('fs').existsSync('expo-env.d.ts')||require('fs').writeFileSync('expo-env.d.ts','/// <reference types=\\\"expo/types\\\" />\\n')\" && tsc --noEmit",
+    "test": "jest",
+    "build:web": "expo export --platform web",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build:web",
+    "postinstall": "setup-skia-web public",
+    "qa": "playwright test",
+    "deploy": "npm run build:web && wrangler pages deploy dist --project-name=tilt-arcade --branch=main"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "preset": "jest-expo",
+    "testMatch": [
+      "**/*.test.ts",
+      "**/*.test.tsx"
+    ]
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.15.0 || >=26.0.0",
+      "onFail": "error"
+    }
+  }
 }
