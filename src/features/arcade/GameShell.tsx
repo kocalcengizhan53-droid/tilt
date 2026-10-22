@@ -99,7 +99,7 @@ export function GameShell({ meta }: { meta: GameMeta }) {
       </View>
 
       <View className="flex-1" onLayout={onLayout}>
-        {Game && area.width > 0 && status !== 'loading' ? (
+        {Game && area.width > 0 && status !== 'loading' && status !== 'intro' ? (
           <Game
             key={run}
             run={run}

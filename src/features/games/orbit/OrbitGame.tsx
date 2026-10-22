@@ -121,7 +121,7 @@ export default function OrbitGame({ width, height, onScore, onEnd, run }: GamePr
         }
       }
       // Off the sides, or fallen below the camera: lost.
-      if (sx.value < -20 || sx.value > width + 20 || sy.value - cameraY.value > height * 0.55) {
+      if (sx.value < -20 || sx.value > width + 20 || sy.value - cameraY.value > height + 40) {
         mode.value = 2;
         runOnJS(lost)();
       }
