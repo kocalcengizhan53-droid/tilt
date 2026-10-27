@@ -1,0 +1,22 @@
+# Tilt
+
+> An offline neon arcade for iOS, Android and the web, built with Expo, React Native Skia and Reanimated: six small games with no network and no account. Scores stay on the device.
+
+## Games
+
+- [Stack](https://tilt-arcade-77n.pages.dev/play/stack): tap when the sliding block lines up; overhang is cut away
+- [Orbit](https://tilt-arcade-77n.pages.dev/play/orbit): hold to circle a planet, release to fly to the next
+- [Breakout](https://tilt-arcade-77n.pages.dev/play/breakout): drag the paddle and clear the wall
+- [Slide](https://tilt-arcade-77n.pages.dev/play/slide): swipe so equal tiles merge
+- [Trace](https://tilt-arcade-77n.pages.dev/play/trace): draw a road from the pad to the goal and ride it
+- [Simon](https://tilt-arcade-77n.pages.dev/play/simon): watch four pads light up and play the sequence back
+
+## Other pages
+
+- [Cabinet](https://tilt-arcade-77n.pages.dev/): all six machines
+- [High scores](https://tilt-arcade-77n.pages.dev/scores)
+- [Settings](https://tilt-arcade-77n.pages.dev/settings): sound, haptics and reduced motion
+
+## Source
+
+- [GitHub](https://github.com/kocalcengizhan53-droid/tilt)

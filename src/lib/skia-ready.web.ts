@@ -16,15 +16,23 @@ export function skiaReady(): Promise<void> {
 }
 
 export function prefetchSkia() {
-  const start = () => void skiaReady();
   /*
-   * On the first touch, or two seconds after the cabinet has painted in its own type, whichever
-   * comes first. Started on idle it came 170 ms in, and three megabytes of WebAssembly competed
-   * with the display face and the cards on a slow connection — for visitors who may never play.
+   * Two seconds after the cabinet has painted in its own type, download the WebAssembly into the
+   * cache at low priority — bytes only. Compiling and starting CanvasKit is main-thread work and
+   * belongs to the moment someone is about to play: their first touch, or the game's own loading
+   * state. Started on idle it came 170 ms in and competed with the fonts and the cards; started in
+   * full after two seconds it stalled the page while the visitor was looking at it.
    */
-  window.addEventListener("pointerdown", start, { once: true, capture: true });
+  window.addEventListener("pointerdown", () => void skiaReady(), {
+    once: true,
+    capture: true,
+  });
+  const warm = () =>
+    void fetch("/canvaskit.wasm", { priority: "low" } as RequestInit).catch(
+      () => {},
+    );
   const later = () =>
-    void document.fonts.ready.then(() => setTimeout(start, 2000));
+    void document.fonts.ready.then(() => setTimeout(warm, 2000));
   if (document.readyState === "complete") later();
   else window.addEventListener("load", later, { once: true });
 }
