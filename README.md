@@ -1,22 +1,37 @@
 # Tilt
 
-An arcade in your pocket: six games, no network, no account. Each one is a small, complete thing with one idea and one technique drawn properly — a GPU canvas, physics on the UI thread, a runtime shader, a path grown under the finger, tiles that keep their identity, tones synthesised at build time.
+An offline neon arcade for iOS, Android and the web: six small, complete games on one lit wall — each with one idea and one technique drawn properly, and the feedback that makes a game feel like a machine rather than a form.
 
 **Play it in a browser:** <https://tilt-arcade-77n.pages.dev> — the same code ships to iOS and Android through Expo.
 
 <p>
-  <img src="docs/cabinet.png" width="190" alt="The cabinet: six machines on a wall">
-  <img src="docs/stack.png" width="190" alt="Stack: blocks with lit faces, a slider, a cut tower">
-  <img src="docs/orbit.png" width="190" alt="Orbit: a ship circling a planet under a starfield">
-  <img src="docs/breakout.png" width="190" alt="Breakout: a wall of bricks, a paddle, a burst of particles">
+  <img src="docs/cabinet.webp" width="190" alt="The cabinet: six machines on a neon wall above a sunset and a grid floor">
+  <img src="docs/stack.webp" width="190" alt="Stack: the block sliding over the tower">
+  <img src="docs/orbit.webp" width="190" alt="Orbit: a ship circling a planet, the next planet waiting">
+  <img src="docs/breakout.webp" width="190" alt="Breakout: a wall of bricks, a paddle, the ball in play">
 </p>
 <p>
-  <img src="docs/slide.png" width="190" alt="Slide: a 4×4 board of tiles">
-  <img src="docs/trace.png" width="190" alt="Trace: a road drawn by hand, a wall, an ink bar">
-  <img src="docs/simon.png" width="190" alt="Simon: four pads">
+  <img src="docs/slide.webp" width="190" alt="Slide: a 4×4 board of tiles mid-game">
+  <img src="docs/trace.webp" width="190" alt="Trace: a road drawn under the finger toward the goal">
+  <img src="docs/simon.webp" width="190" alt="Simon: four pads, one lit">
 </p>
 
+## In three seconds
+
+- **Six arcade games in one app**, no network and no account: Stack, Orbit, Breakout, Slide, Trace and Simon, drawn on the GPU with Skia and moved on the UI thread with Reanimated.
+- **Juice in every game:** sparks, words that pop ("PERFECT ×3"), screen shake and flashes, synthesised sound and haptics — and a reduced-motion setting that keeps the information and drops the movement.
+- **Fast on the web too:** the cabinet scores Lighthouse mobile **92** (accessibility, best practices and SEO 100); a game's first paint went from **21.1 s to 4.5 s** once Skia's 3 MB of WebAssembly stopped blocking the app. Verified in the iOS simulator; 26 Jest tests on the game logic, 20 Playwright checks.
+
 ---
+
+## Challenge → solution → result
+
+| The problem | What was built | Measured |
+| --- | --- | --- |
+| Six games that looked like six forms | One visual world: tube lettering, a signature colour per machine, covers drawn in code, a sunset over a grid floor, cards that press and spring back | Own icon and splash; one look from the cabinet to every game-over card |
+| Games that worked but did not feel like anything | A shared juice layer — bursts, floating words, shake, flash — that every game calls at its own moments, plus sound and haptics | Shake, flash and sparks stop under reduced motion; the words stay |
+| On the web, the whole app waited for CanvasKit | The app starts at once; the WebAssembly loads in its own chunk, the cabinet prefetches it when idle, and a game imports its code only once it is ready | Game first paint **21.1 → 4.5 s**; cabinet Lighthouse mobile **92** |
+| iOS drew neon glows as boxes and showed system fonts | Glow split by platform (stacked copies on iOS), fonts loaded before the first frame | Checked on an iPhone simulator, not only in a browser |
 
 ## The machines
 
@@ -33,13 +48,13 @@ Every game's arithmetic lives in a `logic.ts` beside it and runs the same on the
 
 ## The cabinet
 
-One dark room with lit screens in it. Each machine has a signature colour and nothing else, so the wall reads as six distinct cabinets rather than one app with six screens. A card presses down under the thumb and springs back. The shell every game shares — the one line that explains it, the score in the corner, the game-over card that records the run and offers another — mounts each run fresh, so "play again" is a true reset no game has to implement.
+One dark room with lit screens in it, under a setting sun. Each machine has a signature colour and nothing else, so the wall reads as six distinct cabinets rather than one app with six screens. A card presses down under the thumb and springs back. The shell every game shares — the one line that explains it, the score in the corner, the game-over card that records the run and offers another — mounts each run fresh, so "play again" is a true reset no game has to implement.
 
 Nothing leaves the device. Scores and settings live in SQLite's key-value store on a phone and `localStorage` in a browser. The nine sounds are 16-bit WAVs synthesised by [`scripts/make-tones.mjs`](scripts/make-tones.mjs) — sines and noise under short envelopes, no samples, no licences — and played through `expo-audio`, one player per sound, rewound on every press.
 
 ## On the web
 
-Skia on the web is CanvasKit, a WebAssembly build that has to be loaded before any Skia module is evaluated. [`index.web.tsx`](index.web.tsx) loads it and only then mounts the router; `setup-skia-web` puts the file in `public/` on every install. The static export has one HTML page per route and a fallback for deep links, so `/play/orbit` opens the game cold.
+Skia on the web is CanvasKit, three megabytes of WebAssembly that must be loaded before any module importing Skia is evaluated. The cabinet does not draw with Skia, so [`index.web.tsx`](index.web.tsx) starts the app at once; [`src/lib/skia-ready.web.ts`](src/lib/skia-ready.web.ts) — itself a separate chunk — is prefetched while the player is choosing, and a game's chunk is imported only after it resolves. The static export has one HTML page per route, a document with its own title, description and share image, and a fallback for deep links, so `/play/orbit` opens the game cold.
 
 Two things only the browser suite found: under react-native-web a `Pressable`'s `onPressIn` never fired for a pointer click, so Simon could not be lost; and "Cabinet" from a game opened by deep link, with no history behind it, stayed put. Both fixed, both covered.
 
@@ -49,11 +64,11 @@ Node 24 LTS.
 
 ```bash
 npm install          # also stages CanvasKit for the web
-npm run web          # http://localhost:8081
+npm run web          # Expo prints the local URL
 npm run ios          # or android — Expo Go, or a development build
 
 npm run check        # typecheck, lint, Jest, web export
-npm run qa           # exports the web build, serves it, runs sixteen Playwright checks
+npm run qa           # exports the web build, serves it, runs 20 Playwright checks (phone and desktop)
 npm run deploy       # ships the web build to Cloudflare Pages
 ```
 

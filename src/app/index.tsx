@@ -63,18 +63,13 @@ export default function CabinetScreen() {
             ))}
           </View>
         ))}
-        <Text
-          style={{
-            marginTop: 10,
-            textAlign: 'center',
-            fontFamily: MONO,
-            fontSize: 11,
-            letterSpacing: 2,
-            color: '#a99bc4',
-          }}
-        >
-          6 GAMES · NO NETWORK · NO ACCOUNT
-        </Text>
+        {/* The sun is fixed and this line scrolls, so where they meet depends on the screen:
+            the line carries its own ground rather than hoping to land on the sky. */}
+        <View style={footer}>
+          <Text style={{ fontFamily: MONO, fontSize: 11, letterSpacing: 2, color: '#cdbfe6' }}>
+            6 GAMES · NO NETWORK · NO ACCOUNT
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -91,3 +86,11 @@ const pill = {
   boxShadow: '0 0 12px #22e3ff44',
 };
 const pillText = { fontSize: 14, color: '#e9fbff' };
+const footer = {
+  marginTop: 10,
+  alignSelf: 'center' as const,
+  borderRadius: 999,
+  paddingHorizontal: 14,
+  paddingVertical: 7,
+  backgroundColor: '#0b0414d9',
+};
