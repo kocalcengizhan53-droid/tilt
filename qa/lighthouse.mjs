@@ -19,8 +19,8 @@ const OUT = "qa-output/lighthouse"
 
 /** Budgets are minimum scores out of 100; a page may lower performance only with a reason. */
 const PAGES = [
-  { name: "cabinet", path: "/" },
-  { name: "stack", path: "/play/stack", budget: { performance: 65 }, why: "a game waits for 3 MB of CanvasKit before it can draw" },
+  { name: "cabinet", path: "/", budget: { performance: 80 }, why: "React Native Web hydrates the whole cabinet; a CI runner's slower CPU measures 86 where a laptop measures 89–91" },
+  { name: "stack", path: "/play/stack", budget: { performance: 55 }, why: "a game waits for 3 MB of CanvasKit, which a CI runner without a GPU also draws in software" },
 ]
 
 const DEFAULT = { performance: 85, accessibility: 95, "best-practices": 90, seo: 90 }
