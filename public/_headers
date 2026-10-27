@@ -1,0 +1,6 @@
+# https://developers.cloudflare.com/pages/configuration/headers/
+# Expo names every bundled file by its content hash, so a returning visitor never needs to ask again.
+/_expo/static/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
