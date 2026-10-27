@@ -1,4 +1,4 @@
-import { Canvas, Group, LinearGradient, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Group, LinearGradient, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { useEffect, useRef, useState } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
@@ -32,7 +32,7 @@ function faceColour(level: number) {
   return { front: hsl(h, 72, 62), side: hsl(h, 72, 42), top: hsl(h, 60, 78) };
 }
 
-export default function StackGame({ width, height, onScore, onEnd }: GameProps) {
+export default function StackGame({ width, height, onScore, onEnd, juice }: GameProps) {
   const baseWidth = Math.round(width * 0.62);
   const floorY = height - 36; // world y of the bottom of the first block
   const [blocks, setBlocks] = useState<Block[]>([{ x: (width - baseWidth) / 2, w: baseWidth }]);
@@ -78,18 +78,30 @@ export default function StackGame({ width, height, onScore, onEnd }: GameProps) 
       fallT.value = withTiming(1, { duration: 600 });
       haptic.heavy();
       play('hit');
+      juice.shake(14);
+      juice.flash('#ff5c7a');
       setTimeout(() => onEnd(score.current), 650);
       return;
     }
+
+    // Where the block landed, on screen: its row in the world, moved by the camera.
+    const landY = floorY - (level + 1) * BLOCK_H + cameraY.value;
+    const colour = faceColour(level).top;
 
     if (result.kind === 'perfect') {
       streak.current += 1;
       haptic.medium();
       play('perfect');
+      const cx = result.block.x + result.block.w / 2;
+      juice.burst(cx, landY, colour, 18);
+      juice.text(streak.current > 1 ? `PERFECT ×${streak.current}` : 'PERFECT', { x: cx, y: landY - 18, colour });
+      juice.shake(3);
     } else {
       streak.current = 0;
       haptic.light();
       play('drop');
+      juice.burst(result.cut.x + result.cut.w / 2, landY, colour, 8);
+      juice.shake(2);
       setFalling({ block: result.cut, level });
       fallT.value = 0;
       fallT.value = withTiming(1, { duration: 520 });
@@ -99,6 +111,7 @@ export default function StackGame({ width, height, onScore, onEnd }: GameProps) 
     onScore(score.current);
     const next = [...blocks, result.block];
     setBlocks(next);
+    if ((next.length - 1) % 10 === 0) juice.text(`${next.length - 1} HIGH`, { big: true, colour: '#ffd23f' });
 
     // The next slider: the landed width, entering from the opposite side, a little faster.
     sliderW.value = result.block.w;
@@ -144,7 +157,7 @@ export default function StackGame({ width, height, onScore, onEnd }: GameProps) 
     <GestureDetector gesture={tap}>
       <Canvas style={{ width, height }} accessibilityLabel="Stack: tap to drop the sliding block">
         <Rect x={0} y={0} width={width} height={height}>
-          <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={['#0b0c12', '#141729']} />
+          <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={['#0b0414', '#1d0838']} />
         </Rect>
 
         <Group transform={world}>
@@ -187,9 +200,14 @@ function Block3D({ x, y, w, colour }: { x: number; y: number; w: number; colour:
   )!;
   return (
     <>
+      {/* The tube: a blurred halo in the block's light colour, under the faces. */}
+      <RoundedRect x={x} y={y} width={w} height={BLOCK_H} r={2} color={colour.top} opacity={0.55}>
+        <BlurMask blur={9} style="outer" />
+      </RoundedRect>
       <Path path={side} color={colour.side} />
       <Path path={top} color={colour.top} />
       <RoundedRect x={x} y={y} width={w} height={BLOCK_H} r={2} color={colour.front} />
+      <Rect x={x} y={y} width={w} height={1.5} color="#ffffff" opacity={0.7} />
     </>
   );
 }

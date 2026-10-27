@@ -22,7 +22,10 @@ const ROW_COLOURS = ['#ff6ec7', '#ff7a6b', '#f6c453', '#b9f26b', '#5ee7f0', '#b5
 const PARTICLES = 28;
 const LIVES = 3;
 
-export default function BreakoutGame({ width, height, onScore, onEnd }: GameProps) {
+/** Spark colours by brick row, matching the wall's bands. */
+const BRICK_SPARK = ['#ff4fd8', '#ff5c7a', '#ffd23f', '#9dff4f', '#22e3ff'];
+
+export default function BreakoutGame({ width, height, onScore, onEnd, juice }: GameProps) {
   const r = 7;
   const paddleW = Math.round(width * 0.26);
   const paddleY = height - 48;
@@ -57,8 +60,8 @@ export default function BreakoutGame({ width, height, onScore, onEnd }: GameProp
     play('hit');
     const left = bricks.filter((_, i) => i !== index);
     setBricks(left);
-    void x;
-    void y;
+    juice.burst(x, y, BRICK_SPARK[brick.row % BRICK_SPARK.length], 10);
+    juice.shake(2.5);
     if (left.length === 0) nextLevel();
   };
 
@@ -76,6 +79,8 @@ export default function BreakoutGame({ width, height, onScore, onEnd }: GameProp
     by.value = paddleY - r - 2;
     haptic.success();
     play('win');
+    juice.text('WALL CLEARED', { big: true, colour: '#ffd23f' });
+    juice.flash('#ffd23f');
   };
 
   const loseLife = () => {
@@ -83,6 +88,9 @@ export default function BreakoutGame({ width, height, onScore, onEnd }: GameProp
     setLives(left);
     haptic.heavy();
     play('lose');
+    juice.shake(14);
+    juice.flash('#ff5c7a');
+    if (left > 0) juice.text(left === 1 ? 'LAST BALL' : `${left} BALLS LEFT`, { colour: '#ff5c7a' });
     if (left <= 0) {
       ended.current = true;
       onEnd(score.current);
@@ -237,7 +245,7 @@ export default function BreakoutGame({ width, height, onScore, onEnd }: GameProp
     <GestureDetector gesture={pan}>
       <Canvas style={{ width, height }} accessibilityLabel="Breakout: drag to move the paddle">
         <Rect x={0} y={0} width={width} height={height}>
-          <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={['#0b0c12', '#1a1020']} />
+          <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={['#0b0414', '#2a0a2e']} />
         </Rect>
         <Group transform={shakeTransform}>
           {bricks.map((b, i) => (

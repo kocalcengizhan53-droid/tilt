@@ -2,41 +2,41 @@
 @import 'uniwind';
 
 /*
- * The cabinet.
+ * The cabinet: Neon Arcade.
  *
- * One theme, and it is dark: an arcade is a dark room with lit screens in it. Every game
- * gets a signature colour from this set and nothing else, so the catalogue reads as a wall
- * of distinct machines rather than one app with six screens.
+ * One theme, and it is dark: an arcade at night, a synthwave sky over a grid that runs to the
+ * horizon, lit tubes for type. Every game gets a signature neon from this set and nothing else,
+ * so the catalogue reads as a wall of distinct machines rather than one app with six screens.
  */
 @layer theme {
   :root {
     @variant light {
-      --color-background: oklch(0.14 0.015 275);
-      --color-card: oklch(0.19 0.018 275);
-      --color-foreground: oklch(0.96 0.01 275);
-      --color-muted-foreground: oklch(0.66 0.02 275);
-      --color-border: oklch(0.3 0.02 275);
-      --color-live: oklch(0.85 0.17 85);
-      --color-neon-cyan: oklch(0.86 0.14 200);
-      --color-neon-magenta: oklch(0.72 0.24 340);
-      --color-neon-lime: oklch(0.88 0.21 130);
-      --color-neon-amber: oklch(0.85 0.17 70);
-      --color-neon-violet: oklch(0.7 0.2 300);
-      --color-neon-coral: oklch(0.74 0.2 25);
+      --color-background: #0b0414;
+      --color-card: #140a26;
+      --color-foreground: #f4ecff;
+      --color-muted-foreground: #a99bc4;
+      --color-border: #34245a;
+      --color-live: #ffd23f;
+      --color-neon-cyan: #22e3ff;
+      --color-neon-magenta: #ff4fd8;
+      --color-neon-lime: #9dff4f;
+      --color-neon-amber: #ffd23f;
+      --color-neon-violet: #b26bff;
+      --color-neon-coral: #ff5c7a;
     }
     @variant dark {
-      --color-background: oklch(0.14 0.015 275);
-      --color-card: oklch(0.19 0.018 275);
-      --color-foreground: oklch(0.96 0.01 275);
-      --color-muted-foreground: oklch(0.66 0.02 275);
-      --color-border: oklch(0.3 0.02 275);
-      --color-live: oklch(0.85 0.17 85);
-      --color-neon-cyan: oklch(0.86 0.14 200);
-      --color-neon-magenta: oklch(0.72 0.24 340);
-      --color-neon-lime: oklch(0.88 0.21 130);
-      --color-neon-amber: oklch(0.85 0.17 70);
-      --color-neon-violet: oklch(0.7 0.2 300);
-      --color-neon-coral: oklch(0.74 0.2 25);
+      --color-background: #0b0414;
+      --color-card: #140a26;
+      --color-foreground: #f4ecff;
+      --color-muted-foreground: #a99bc4;
+      --color-border: #34245a;
+      --color-live: #ffd23f;
+      --color-neon-cyan: #22e3ff;
+      --color-neon-magenta: #ff4fd8;
+      --color-neon-lime: #9dff4f;
+      --color-neon-amber: #ffd23f;
+      --color-neon-violet: #b26bff;
+      --color-neon-coral: #ff5c7a;
     }
   }
 }

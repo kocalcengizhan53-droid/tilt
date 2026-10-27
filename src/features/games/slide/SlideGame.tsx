@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeOut, LinearTransition, ZoomIn } from 'react-native-reanimated';
 
 import type { GameProps } from '@/features/arcade/catalogue';
+import { DISPLAY } from '@/features/arcade/neon';
 import { play } from '@/lib/audio';
 import { haptic } from '@/lib/haptics';
 import { canMove, emptyBoard, highest, move, spawn, SIZE, type Board, type Dir, type Tile } from './logic';
@@ -19,21 +20,22 @@ import { canMove, emptyBoard, highest, move, spawn, SIZE, type Board, type Dir, 
  */
 
 const GAP = 8;
+/** Tiles climb the neon scale: dim violet for the small ones, lit amber, coral and magenta as they grow. */
 const COLOURS: Record<number, string> = {
-  2: '#3b3f55',
-  4: '#4a4f6a',
-  8: '#f6c453',
-  16: '#f4a43a',
-  32: '#ef7d2e',
-  64: '#ea5a2a',
-  128: '#ffd166',
-  256: '#ffc43a',
-  512: '#ffb703',
-  1024: '#fb8500',
-  2048: '#ff6ec7',
+  2: '#2a1d48',
+  4: '#3a2766',
+  8: '#ffd23f',
+  16: '#ffb238',
+  32: '#ff8a3d',
+  64: '#ff5c7a',
+  128: '#ff4fd8',
+  256: '#d55bff',
+  512: '#b26bff',
+  1024: '#22e3ff',
+  2048: '#9dff4f',
 };
 
-export default function SlideGame({ width, height, onScore, onEnd }: GameProps) {
+export default function SlideGame({ width, height, onScore, onEnd, juice }: GameProps) {
   const size = Math.min(width, height) - 32;
   const cell = (size - GAP * (SIZE + 1)) / SIZE;
   const [board, setBoard] = useState<Board>(() => spawn(spawn(emptyBoard())));
@@ -52,6 +54,15 @@ export default function SlideGame({ width, height, onScore, onEnd }: GameProps) 
     if (m.gained) {
       haptic.light();
       play('merge');
+      // A spark where each merge happened, and the points over the board.
+      const x0 = (width - size) / 2;
+      const y0 = (height - size) / 2;
+      for (const id of m.born) {
+        const t = m.board.tiles.find((tile) => tile.id === id);
+        if (t) juice.burst(x0 + GAP + t.c * (cell + GAP) + cell / 2, y0 + GAP + t.r * (cell + GAP) + cell / 2, '#ffd23f', t.v >= 128 ? 16 : 8);
+      }
+      juice.text(`+${m.gained}`, { y: y0 - 6, colour: '#ffd23f', big: m.gained >= 64 });
+      if (m.gained >= 64) juice.shake(3);
     } else {
       play('tick');
     }
@@ -65,6 +76,8 @@ export default function SlideGame({ width, height, onScore, onEnd }: GameProps) 
     if (highest(next) === 2048) {
       haptic.success();
       play('win');
+      juice.text('2048!', { big: true, colour: '#ffd23f' });
+      juice.flash('#ffd23f');
     }
     if (!canMove(next)) {
       over.current = true;
@@ -113,7 +126,7 @@ export default function SlideGame({ width, height, onScore, onEnd }: GameProps) 
                 left: GAP + (i % SIZE) * (cell + GAP),
                 top: GAP + Math.floor(i / SIZE) * (cell + GAP),
                 borderRadius: 10,
-                backgroundColor: '#1d2033',
+                backgroundColor: '#1a1030',
               }}
             />
           ))}
@@ -150,12 +163,13 @@ const tileStyle = (t: Tile, cell: number) => ({
   borderRadius: 10,
   alignItems: 'center' as const,
   justifyContent: 'center' as const,
-  backgroundColor: COLOURS[t.v] ?? '#ff6ec7',
+  backgroundColor: COLOURS[t.v] ?? '#9dff4f',
+  // From 8 up a tile is lit, and the bigger it is the further it glows.
+  boxShadow: t.v >= 8 ? `0 0 ${Math.min(26, 6 + Math.log2(t.v) * 2)}px ${COLOURS[t.v] ?? '#9dff4f'}aa` : 'none',
 });
 
 const labelStyle = (v: number, cell: number) => ({
-  fontFamily: 'monospace',
-  fontWeight: '800' as const,
+  fontFamily: DISPLAY,
   fontSize: v >= 1024 ? cell * 0.3 : v >= 128 ? cell * 0.36 : cell * 0.42,
-  color: v <= 4 ? '#e8eaf6' : '#141729',
+  color: v <= 4 ? '#f4ecff' : '#12051f',
 });

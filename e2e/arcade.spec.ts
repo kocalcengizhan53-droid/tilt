@@ -11,10 +11,15 @@ const GAMES = ['Stack', 'Orbit', 'Breakout', 'Slide', 'Trace', 'Simon'] as const
 
 async function openGame(page: Page, id: string) {
   await page.goto(`/play/${id}`);
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('button', { name: 'Play' }).click();
-  await page.waitForTimeout(600);
+  const coin = page.getByRole('button', { name: 'Insert coin' });
+  await expect(coin).toBeVisible({ timeout: 30_000 });
+  await coin.click();
+  // Three, two, one, go: a fixed 1.96 s, after which the machine is mounted and running.
+  await expect(coin).toBeHidden();
+  await page.waitForTimeout(2_100);
 }
+
+const gameOver = (page: Page) => page.getByText('Game over').first();
 
 const score = async (page: Page) => Number((await page.getByLabel(/^Score \d+/).getAttribute('aria-label'))?.replace(/\D/g, ''));
 
@@ -31,7 +36,7 @@ test('the cabinet shows six machines and reaches each one', async ({ page }) => 
     await expect(page.getByRole('link', { name: new RegExp(`^${name}\\.`) })).toBeVisible();
   }
   await page.getByRole('link', { name: /^Slide\./ }).click();
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Insert coin' })).toBeVisible();
   await page.getByRole('button', { name: 'Back to the cabinet' }).click();
   await expect(page.getByRole('link', { name: /^Stack\./ })).toBeVisible();
 });
@@ -40,15 +45,17 @@ test('Stack: a drop scores, a miss ends the run and records a best', async ({ pa
   await openGame(page, 'stack');
   const canvas = page.locator('canvas').first();
   await expect(canvas).toBeVisible();
+  // The first block slides in from the left; drop it once it is over the tower.
+  await page.waitForTimeout(500);
   await tapCanvas(page, 150, 400);
   await expect.poll(() => score(page)).toBeGreaterThanOrEqual(1);
   // Drops at the wrong moment eventually miss; keep tapping until the run ends.
   for (let i = 0; i < 40; i++) {
-    if (await page.getByText('Game over').isVisible()) break;
+    if (await gameOver(page).isVisible()) break;
     await tapCanvas(page, 150, 400);
     await page.waitForTimeout(90);
   }
-  await expect(page.getByText('Game over')).toBeVisible({ timeout: 10_000 });
+  await expect(gameOver(page)).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Cabinet', exact: true }).click();
   await expect(page.getByRole('link', { name: /^Stack\..*Best \d+/ })).toBeVisible();
 });
@@ -62,6 +69,19 @@ test('Slide: arrow keys move tiles and the score follows a merge', async ({ page
   const s = await score(page);
   expect(s).toBeGreaterThanOrEqual(0);
   await expect(page.locator('text=/^(2|4|8|16|32|64)$/').first()).toBeVisible();
+});
+
+test('Slide: a merge is announced — the points float up over the board', async ({ page }) => {
+  await openGame(page, 'slide');
+  let seen = false;
+  for (let i = 0; i < 40 && !seen; i++) {
+    const before = await score(page);
+    await page.keyboard.press(['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowDown'][i % 4]);
+    await page.waitForTimeout(80);
+    if ((await score(page)) > before) seen = await page.getByText(/^\+\d+$/).first().isVisible();
+    await page.waitForTimeout(150);
+  }
+  expect(seen, 'a "+N" word appeared after a scoring move').toBe(true);
 });
 
 test('Breakout: the paddle follows a drag and the ball serves', async ({ page }) => {
@@ -81,7 +101,7 @@ test('Orbit: a release leaves the orbit and the run ends or scores', async ({ pa
   await page.waitForTimeout(700);
   await tapCanvas(page, 150, 400);
   await page.waitForTimeout(3500);
-  const over = await page.getByText('Game over').isVisible();
+  const over = await gameOver(page).isVisible();
   const s = await score(page).catch(() => 0);
   expect(over || s >= 1 || s === 0).toBe(true);
 });
@@ -102,14 +122,14 @@ test('Trace: a stroke draws and a release rides it', async ({ page }) => {
 test('Simon: the pads play back and a wrong press ends the run', async ({ page }) => {
   await openGame(page, 'simon');
   await expect(page.getByText(/your turn/i)).toBeVisible({ timeout: 10_000 });
-  // The same pad every round: right by luck one round in four, wrong soon enough.
-  for (let round = 0; round < 8; round++) {
-    await expect(page.getByText(/Game over|your turn/i).first()).toBeVisible({ timeout: 15_000 });
-    if (await page.getByText('Game over').isVisible()) break;
-    await page.getByRole('button', { name: /^Pad 4/ }).click();
-    await expect(page.getByText(/Game over|· watch/i).first()).toBeVisible({ timeout: 5_000 });
+  // The same pad every time: right by luck now and then, wrong soon enough. A right press in the
+  // middle of a longer sequence leaves it the player's turn, so keep pressing while it is.
+  for (let presses = 0; presses < 40; presses++) {
+    if (await gameOver(page).isVisible()) break;
+    if (await page.getByText(/your turn/i).first().isVisible()) await page.getByRole('button', { name: /^Pad 4/ }).click();
+    await page.waitForTimeout(350);
   }
-  await expect(page.getByText('Game over')).toBeVisible({ timeout: 10_000 });
+  await expect(gameOver(page)).toBeVisible({ timeout: 10_000 });
 });
 
 test('settings persist across a reload', async ({ page }) => {
@@ -123,4 +143,14 @@ test('settings persist across a reload', async ({ page }) => {
   if (before) await expect(after).not.toBeChecked();
   else await expect(after).toBeChecked();
   await page.getByRole('switch', { name: 'Sound' }).click(); // leave it as it was
+});
+
+test('reduce motion is a setting, and it is kept', async ({ page }) => {
+  await page.goto('/settings');
+  const motion = page.getByRole('switch', { name: 'Reduce motion' });
+  await expect(motion).not.toBeChecked();
+  await motion.click();
+  await page.reload();
+  await expect(page.getByRole('switch', { name: 'Reduce motion' })).toBeChecked();
+  await page.getByRole('switch', { name: 'Reduce motion' }).click();
 });

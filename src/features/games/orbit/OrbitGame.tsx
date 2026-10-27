@@ -37,7 +37,7 @@ half4 main(float2 xy) {
   float2 f = fract(world / 7.0) - 0.5;
   float star = smoothstep(0.12, 0.0, length(f)) * step(0.992, h);
   float tw = 0.55 + 0.45 * sin(time * 2.2 + h * 60.0);
-  float3 bg = mix(float3(0.043, 0.047, 0.07), float3(0.10, 0.07, 0.19), xy.y / resolution.y);
+  float3 bg = mix(float3(0.043, 0.016, 0.078), float3(0.13, 0.04, 0.24), xy.y / resolution.y);
   return half4(half3(bg + star * tw * 0.9), 1.0);
 }
 `)!;
@@ -56,7 +56,7 @@ function layout(width: number, seed: number, count: number) {
 
 const hsl = (h: number, s: number, l: number) => `hsl(${h}, ${s}%, ${l}%)`;
 
-export default function OrbitGame({ width, height, onScore, onEnd, run }: GameProps) {
+export default function OrbitGame({ width, height, onScore, onEnd, run, juice }: GameProps) {
   const planets = useMemo(() => layout(width, run * 7919 + 13, 120), [width, run]);
   const px = useMemo(() => planets.map((p) => p.x), [planets]);
   const py = useMemo(() => planets.map((p) => p.y), [planets]);
@@ -81,12 +81,18 @@ export default function OrbitGame({ width, height, onScore, onEnd, run }: GamePr
     onScore(i);
     haptic.medium();
     play('perfect');
+    // The planet is where the camera has not yet moved from.
+    const colour = hsl(planets[i].hue, 90, 72);
+    juice.burst(px[i], py[i] - cameraY.value, colour, 16);
+    if (i % 5 === 0) juice.text(`${i} PLANETS`, { colour: '#b26bff', big: i % 10 === 0 });
   };
   const lost = () => {
     if (ended.current) return;
     ended.current = true;
     haptic.heavy();
     play('lose');
+    juice.shake(12);
+    juice.flash('#ff5c7a');
     setTimeout(() => onEnd(score.current), 500);
   };
 

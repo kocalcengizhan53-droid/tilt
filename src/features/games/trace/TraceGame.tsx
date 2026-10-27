@@ -59,7 +59,7 @@ function sample(path: SkPath, count: number): { xs: number[]; ys: number[]; leng
   return { xs, ys, length };
 }
 
-export default function TraceGame({ width, height, onScore, onEnd }: GameProps) {
+export default function TraceGame({ width, height, onScore, onEnd, juice }: GameProps) {
   const [levelNo, setLevelNo] = useState(1);
   const level = useMemo(() => makeLevel(levelNo, width, height), [levelNo, width, height]);
   const [phase, setPhase] = useState<'draw' | 'ride' | 'won' | 'lost'>('draw');
@@ -108,6 +108,8 @@ export default function TraceGame({ width, height, onScore, onEnd }: GameProps) 
       crashed.current = true;
       haptic.error();
       play('hit');
+      juice.shake(6);
+      juice.burst(x, y, '#ff5c7a', 8);
     }
     setPath(builder.current.build());
   };
@@ -135,6 +137,8 @@ export default function TraceGame({ width, height, onScore, onEnd }: GameProps) 
       onScore(score.current);
       haptic.success();
       play('win');
+      juice.burst(level.goal.x, level.goal.y, '#9dff4f', 22);
+      juice.text('CLEAR!', { x: level.goal.x, y: level.goal.y + 50, colour: '#9dff4f' });
       setPhase('won');
       setTimeout(() => {
         setLevelNo((n) => n + 1);
@@ -143,6 +147,8 @@ export default function TraceGame({ width, height, onScore, onEnd }: GameProps) 
     } else {
       haptic.heavy();
       play('lose');
+      juice.shake(12);
+      juice.flash('#ff5c7a');
       setPhase('lost');
       setTimeout(() => onEnd(score.current), 700);
     }
@@ -174,7 +180,7 @@ export default function TraceGame({ width, height, onScore, onEnd }: GameProps) 
     <GestureDetector gesture={pan}>
       <Canvas style={{ width, height }} accessibilityLabel="Trace: draw a road from the pad to the goal">
         <Rect x={0} y={0} width={width} height={height}>
-          <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={['#0b0c12', '#0f1a12']} />
+          <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={['#0b0414', '#0d2214']} />
         </Rect>
         {/* Ink left, as a bar along the top. */}
         <RoundedRect x={16} y={10} width={width - 32} height={4} r={2} color="#1d2033" />

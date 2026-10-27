@@ -24,7 +24,7 @@ const PAD: { colour: string; sound: Sound }[] = [
 
 type Phase = 'watch' | 'play' | 'done';
 
-export default function SimonGame({ width, height, onScore, onEnd }: GameProps) {
+export default function SimonGame({ width, height, onScore, onEnd, juice }: GameProps) {
   const [sequence, setSequence] = useState<number[]>(() => extend([]));
   const [answer, setAnswer] = useState<number[]>([]);
   const [phase, setPhase] = useState<Phase>('watch');
@@ -68,6 +68,8 @@ export default function SimonGame({ width, height, onScore, onEnd }: GameProps) 
     if (result === 'wrong') {
       setPhase('done');
       haptic.error();
+      juice.shake(12);
+      juice.flash('#ff5c7a');
       setTimeout(() => play('lose'), 200);
       setTimeout(() => onEnd(round - 1), 700);
       return;
@@ -78,6 +80,7 @@ export default function SimonGame({ width, height, onScore, onEnd }: GameProps) 
       setPhase('watch');
       setSequence(extend(sequence));
       haptic.success();
+      juice.text(`ROUND ${round + 1}`, { colour: '#ff4fd8', big: (round + 1) % 5 === 0 });
       return;
     }
     setAnswer(next);

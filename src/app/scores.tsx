@@ -3,28 +3,36 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GAMES, gameById } from '@/features/arcade/catalogue';
+import { DISPLAY, NeonText, textGlow } from '@/features/arcade/neon';
 import { useScores } from '@/lib/scores';
+
 
 export default function ScoresScreen() {
   const insets = useSafeAreaInsets();
   const { best, recent, reset } = useScores();
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top + 8 }}>
+    <View role="main" className="flex-1 bg-background" style={{ paddingTop: insets.top + 8 }}>
       <View className="flex-row items-center justify-between px-4 pb-2">
-        <Text className="text-2xl font-black uppercase tracking-[4px] text-foreground">Scores</Text>
+        <NeonText colour="#ffd23f" size={26}>
+          HIGH SCORES
+        </NeonText>
         <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => router.back()} className="min-h-11 min-w-11 items-end justify-center">
           <Text className="text-base text-muted-foreground">Done</Text>
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 8, paddingBottom: insets.bottom + 24 }}>
         {GAMES.map((g) => (
-          <View key={g.id} className="flex-row items-center justify-between rounded-2xl bg-card px-4 py-3">
+          <View
+            key={g.id}
+            className="flex-row items-center justify-between rounded-2xl bg-card px-4 py-3"
+            style={{ borderWidth: 1, borderColor: `${g.hex}66`, boxShadow: `0 0 12px ${g.hex}22` }}
+          >
             <View className="flex-row items-center gap-3">
-              <View className={`h-2.5 w-2.5 rounded-full bg-${g.colour}`} />
-              <Text className="text-base font-semibold text-foreground">{g.title}</Text>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: g.hex, boxShadow: `0 0 8px ${g.hex}` }} />
+              <Text style={{ fontFamily: DISPLAY, fontSize: 16, color: g.hex, letterSpacing: 1 }}>{g.title.toUpperCase()}</Text>
             </View>
-            <Text className="font-mono text-xl text-foreground">{best[g.id] ?? '—'}</Text>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 22, color: '#ffffff', ...textGlow(g.hex, 8) }}>{best[g.id] ?? '—'}</Text>
           </View>
         ))}
         {recent.length ? (
