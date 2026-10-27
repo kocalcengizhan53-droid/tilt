@@ -6,10 +6,12 @@ import Animated, { FadeIn, FadeInDown, FadeOut, ZoomIn, useAnimatedStyle, useSha
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { GameMeta, GameProps } from '@/features/arcade/catalogue';
+import { streak, type DailyRules } from '@/features/daily/daily';
 import { useJuiceLayer } from '@/features/arcade/juice';
 import { DISPLAY, MONO, NeonText, SKY, textGlow } from '@/features/arcade/neon';
 import { play } from '@/lib/audio';
 import { haptic } from '@/lib/haptics';
+import { useDaily } from '@/lib/daily';
 import { useMotion } from '@/lib/motion';
 import { useScores } from '@/lib/scores';
 import { skiaReady } from '@/lib/skia-ready';
@@ -26,7 +28,10 @@ type Status = 'intro' | 'countdown' | 'playing' | 'over';
  * another. Every game is mounted fresh for each run — `run` is part of its key — so "play
  * again" is a true reset and no game has to implement one.
  */
-export function GameShell({ meta }: { meta: GameMeta }) {
+/** "28 OCT", for the daily tower's title. */
+const shortDate = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+
+export function GameShell({ meta, daily }: { meta: GameMeta; daily?: { day: string; rules: DailyRules } }) {
   const insets = useSafeAreaInsets();
   const { reduced } = useMotion();
   const [Game, setGame] = useState<ComponentType<GameProps> | null>(null);
@@ -40,6 +45,10 @@ export function GameShell({ meta }: { meta: GameMeta }) {
   const [area, setArea] = useState({ width: 0, height: 0 });
   const best = useScores((s) => s.best[meta.id] ?? 0);
   const record = useScores((s) => s.record);
+  // The daily tower: one attempt, recorded apart from the ordinary best, since its rules differ.
+  const history = useDaily((s) => s.history);
+  const recordDaily = useDaily((s) => s.record);
+  const playedToday = daily ? history[daily.day] : undefined;
   const { juice, shakeStyle, overlay } = useJuiceLayer(area);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -71,7 +80,7 @@ export function GameShell({ meta }: { meta: GameMeta }) {
 
   /** Three, two, one, go — a tick each, then the machine starts. */
   const start = () => {
-    if (!Game) return;
+    if (!Game || (daily && playedToday !== undefined)) return;
     timers.current.forEach(clearTimeout);
     setScore(0);
     setResult(null);
@@ -97,7 +106,8 @@ export function GameShell({ meta }: { meta: GameMeta }) {
   };
 
   const end = (finalScore: number) => {
-    const r = record(meta.id, finalScore);
+    if (daily) recordDaily(daily.day, finalScore);
+    const r = daily ? { best: finalScore, isNew: false } : record(meta.id, finalScore);
     setScore(finalScore);
     setResult(r);
     setStatus('over');
@@ -126,7 +136,7 @@ export function GameShell({ meta }: { meta: GameMeta }) {
           <Text style={{ fontSize: 15, color: '#a99bc4' }}>‹ Cabinet</Text>
         </Pressable>
         <NeonText colour={meta.hex} size={15}>
-          {meta.title.toUpperCase()}
+          {daily ? `DAILY · ${shortDate(daily.day)}` : meta.title.toUpperCase()}
         </NeonText>
         <View className="min-w-11 items-end">
           <Animated.Text
@@ -135,25 +145,42 @@ export function GameShell({ meta }: { meta: GameMeta }) {
           >
             {score}
           </Animated.Text>
-          <Text style={{ fontFamily: MONO, fontSize: 11, color: '#a99bc4' }}>best {Math.max(best, score)}</Text>
+          <Text style={{ fontFamily: MONO, fontSize: 11, color: '#a99bc4' }}>{daily ? 'one attempt' : `best ${Math.max(best, score)}`}</Text>
         </View>
       </View>
 
       <View style={{ flex: 1 }} onLayout={onLayout}>
         <Animated.View style={[{ flex: 1 }, shakeStyle]}>
           {Game && area.width > 0 && (status === 'playing' || status === 'over') ? (
-            <Game key={run} run={run} width={area.width} height={area.height} onScore={setScore} onEnd={end} juice={juice} />
+            <Game key={run} run={run} width={area.width} height={area.height} onScore={setScore} onEnd={end} juice={juice} daily={daily?.rules} />
           ) : null}
         </Animated.View>
         {overlay}
 
-        {status === 'intro' ? (
+        {status === 'intro' && daily && playedToday !== undefined ? (
+          <Overlay>
+            <Animated.View entering={FadeInDown.duration(360)} style={{ alignItems: 'center', gap: 14, paddingHorizontal: 32 }}>
+              <NeonText colour={meta.hex} size={34} flicker>
+                TODAY&apos;S TOWER
+              </NeonText>
+              <Text accessibilityLabel={`Today's score ${playedToday}`} style={{ fontFamily: DISPLAY, fontSize: 64, color: '#ffffff', ...textGlow(meta.hex, 22) }}>
+                {playedToday}
+              </Text>
+              <Text style={{ textAlign: 'center', fontSize: 15, lineHeight: 22, color: '#f4ecff' }}>
+                Built. A new tower goes up at midnight · {streak(history, daily.day)}-day streak.
+              </Text>
+              <Button label="Cabinet" ghost onPress={leave} />
+            </Animated.View>
+          </Overlay>
+        ) : status === 'intro' ? (
           <Overlay>
             <Animated.View entering={FadeInDown.duration(360)} style={{ alignItems: 'center', gap: 18, paddingHorizontal: 32 }}>
               <NeonText colour={meta.hex} size={46} flicker>
-                {meta.title.toUpperCase()}
+                {daily ? 'DAILY TOWER' : meta.title.toUpperCase()}
               </NeonText>
-              <Text style={{ textAlign: 'center', fontSize: 16, lineHeight: 24, color: '#f4ecff' }}>{meta.howTo}</Text>
+              <Text style={{ textAlign: 'center', fontSize: 16, lineHeight: 24, color: '#f4ecff' }}>
+                {daily ? 'Everyone gets the same tower today, and you get one attempt. It resets at midnight.' : meta.howTo}
+              </Text>
               <Text style={{ textAlign: 'center', fontFamily: MONO, fontSize: 11, lineHeight: 17, color: '#a99bc4' }}>{meta.technique}</Text>
               <Button label={Game ? 'Insert coin' : 'Warming up'} colour={meta.hex} onPress={start} pulse={!reduced && !!Game} disabled={!Game} />
             </Animated.View>
@@ -177,7 +204,9 @@ export function GameShell({ meta }: { meta: GameMeta }) {
                 GAME OVER
               </NeonText>
               <CountUp to={score} colour={meta.hex} />
-              {result?.isNew && score > 0 ? (
+              {daily ? (
+                <Text style={{ fontFamily: MONO, fontSize: 13, color: '#a99bc4' }}>{streak(history, daily.day)}-day streak · back at midnight</Text>
+              ) : result?.isNew && score > 0 ? (
                 <Animated.View entering={FadeIn.delay(450)}>
                   <NeonText colour="#ffd23f" size={20}>
                     ★ NEW BEST ★
@@ -187,8 +216,8 @@ export function GameShell({ meta }: { meta: GameMeta }) {
                 <Text style={{ fontFamily: MONO, fontSize: 13, color: '#a99bc4' }}>best {result?.best ?? best}</Text>
               )}
               <View style={{ marginTop: 16, flexDirection: 'row', gap: 12 }}>
-                <Button label="Play again" colour={meta.hex} onPress={start} />
-                <Button label="Cabinet" ghost onPress={leave} />
+                {daily ? null : <Button label="Play again" colour={meta.hex} onPress={start} />}
+                <Button label="Cabinet" ghost={!daily} onPress={leave} />
               </View>
             </Animated.View>
           </Overlay>

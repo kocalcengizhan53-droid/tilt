@@ -10,73 +10,83 @@
  *
  *   QA_URL=http://localhost:3300 node qa/lighthouse.mjs
  */
-import { spawnSync } from "node:child_process"
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const BASE = (process.env.QA_URL ?? "http://localhost:4180").replace(/\/$/, "")
-const RUNS = Number(process.env.LH_RUNS ?? 3)
-const OUT = "qa-output/lighthouse"
+const BASE = (process.env.QA_URL ?? 'http://localhost:4180').replace(/\/$/, '');
+const RUNS = Number(process.env.LH_RUNS ?? 3);
+const OUT = 'qa-output/lighthouse';
 
 /** Budgets are minimum scores out of 100; a page may lower performance only with a reason. */
 const PAGES = [
-  { name: "cabinet", path: "/", budget: { performance: 80 }, why: "React Native Web hydrates the whole cabinet; a CI runner's slower CPU measures 86 where a laptop measures 89–91" },
-  { name: "stack", path: "/play/stack", budget: { performance: 55 }, why: "a game waits for 3 MB of CanvasKit, which a CI runner without a GPU also draws in software" },
-]
+  {
+    name: 'cabinet',
+    path: '/',
+    budget: { performance: 80 },
+    why: "React Native Web hydrates the whole cabinet; a CI runner's slower CPU measures 86 where a laptop measures 89–91",
+  },
+  {
+    name: 'stack',
+    path: '/play/stack',
+    budget: { performance: 55 },
+    why: 'a game waits for 3 MB of CanvasKit, which a CI runner without a GPU also draws in software',
+  },
+];
 
-const DEFAULT = { performance: 85, accessibility: 95, "best-practices": 90, seo: 90 }
-const TARGET = 90
-const warnings = []
-const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]
-mkdirSync(OUT, { recursive: true })
+const DEFAULT = { performance: 85, accessibility: 95, 'best-practices': 90, seo: 90 };
+const TARGET = 90;
+const warnings = [];
+const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+mkdirSync(OUT, { recursive: true });
 
-const flags = ["--headless=new", ...(process.env.CI ? ["--no-sandbox"] : [])].join(" ")
-const failures = []
-const summary = []
+const flags = ['--headless=new', ...(process.env.CI ? ['--no-sandbox'] : [])].join(' ');
+const failures = [];
+const summary = [];
 
 for (const page of PAGES) {
-  const runs = []
+  const runs = [];
   for (let i = 0; i < RUNS; i++) {
-    const file = `${OUT}/${page.name}-${i}.json`
+    const file = `${OUT}/${page.name}-${i}.json`;
     const r = spawnSync(
-      "npx",
-      ["--yes", "lighthouse@13.5.0", BASE + page.path, "--output=json", `--output-path=${file}`, "--quiet", `--chrome-flags=${flags}`],
-      { stdio: "inherit" }
-    )
+      'npx',
+      ['--yes', 'lighthouse@13.5.0', BASE + page.path, '--output=json', `--output-path=${file}`, '--quiet', `--chrome-flags=${flags}`],
+      { stdio: 'inherit' },
+    );
     if (r.status !== 0) {
-      failures.push(`${page.path}: Lighthouse exited with ${r.status}`)
-      break
+      failures.push(`${page.path}: Lighthouse exited with ${r.status}`);
+      break;
     }
-    const report = JSON.parse(readFileSync(file, "utf8"))
+    const report = JSON.parse(readFileSync(file, 'utf8'));
     runs.push({
       scores: Object.fromEntries(Object.entries(report.categories).map(([k, v]) => [k, Math.round((v.score ?? 0) * 100)])),
-      tbt: Math.round(report.audits["total-blocking-time"].numericValue),
+      tbt: Math.round(report.audits['total-blocking-time'].numericValue),
       benchmark: Math.round(report.environment.benchmarkIndex),
-      lcp: Math.round(report.audits["largest-contentful-paint"].numericValue),
-    })
+      lcp: Math.round(report.audits['largest-contentful-paint'].numericValue),
+    });
   }
-  if (!runs.length) continue
-  const budget = { ...DEFAULT, ...page.budget }
-  const result = { page: page.path, runs: runs.length }
+  if (!runs.length) continue;
+  const budget = { ...DEFAULT, ...page.budget };
+  const result = { page: page.path, runs: runs.length };
   for (const [category, min] of Object.entries(budget)) {
-    const score = median(runs.map((r) => r.scores[category]))
-    result[category] = score
-    if (score < min) failures.push(`${page.path}: ${category} ${score} < ${min}${page.why ? ` (${page.why})` : ""}`)
+    const score = median(runs.map((r) => r.scores[category]));
+    result[category] = score;
+    if (score < min) failures.push(`${page.path}: ${category} ${score} < ${min}${page.why ? ` (${page.why})` : ''}`);
   }
   if (result.performance < TARGET && result.performance >= budget.performance)
-    warnings.push(`${page.path}: performance ${result.performance}, under the target of ${TARGET}`)
-  result.tbt = median(runs.map((r) => r.tbt))
-  result.lcp = median(runs.map((r) => r.lcp))
-  summary.push(result)
+    warnings.push(`${page.path}: performance ${result.performance}, under the target of ${TARGET}`);
+  result.tbt = median(runs.map((r) => r.tbt));
+  result.lcp = median(runs.map((r) => r.lcp));
+  summary.push(result);
   console.log(
-    `${page.path.padEnd(28)} perf ${result.performance}  a11y ${result.accessibility}  bp ${result["best-practices"]}  seo ${result.seo}  ` +
-      `TBT ${result.tbt} ms  LCP ${(result.lcp / 1000).toFixed(1)} s  (median of ${runs.length}, host benchmark ${median(runs.map((r) => r.benchmark))})`
-  )
+    `${page.path.padEnd(28)} perf ${result.performance}  a11y ${result.accessibility}  bp ${result['best-practices']}  seo ${result.seo}  ` +
+      `TBT ${result.tbt} ms  LCP ${(result.lcp / 1000).toFixed(1)} s  (median of ${runs.length}, host benchmark ${median(runs.map((r) => r.benchmark))})`,
+  );
 }
 
-writeFileSync(`${OUT}/summary.json`, JSON.stringify(summary, null, 2))
-if (warnings.length) console.warn(`\nUnder target:\n  ${warnings.join("\n  ")}`)
+writeFileSync(`${OUT}/summary.json`, JSON.stringify(summary, null, 2));
+if (warnings.length) console.warn(`\nUnder target:\n  ${warnings.join('\n  ')}`);
 if (failures.length) {
-  console.error(`\nLighthouse gate failed:\n  ${failures.join("\n  ")}`)
-  process.exit(1)
+  console.error(`\nLighthouse gate failed:\n  ${failures.join('\n  ')}`);
+  process.exit(1);
 }
-console.log("\nLighthouse gate passed")
+console.log('\nLighthouse gate passed');

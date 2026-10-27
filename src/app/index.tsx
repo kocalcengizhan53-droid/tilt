@@ -8,6 +8,7 @@ import { GameCard } from '@/features/arcade/GameCard';
 import { Backdrop, MONO, NeonText } from '@/features/arcade/neon';
 import { useScores } from '@/lib/scores';
 import { prefetchSkia } from '@/lib/skia-ready';
+import { DailyCard } from '@/features/daily/DailyCard';
 
 /** The cabinet: a lit sign, six machines two to a row, and the way to the scores and the switches. */
 export default function CabinetScreen() {
@@ -56,6 +57,7 @@ export default function CabinetScreen() {
             </Pressable>
           </View>
         </View>
+        <DailyCard />
         {rows.map((row, r) => (
           <View key={r} className="flex-row gap-3">
             {row.map((meta, i) => (

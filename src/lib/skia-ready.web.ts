@@ -7,10 +7,8 @@
 let loading: Promise<void> | null = null;
 
 export function skiaReady(): Promise<void> {
-  loading ??= import("@shopify/react-native-skia/lib/module/web")
-    .then(({ LoadSkiaWeb }) =>
-      LoadSkiaWeb({ locateFile: (file: string) => `/${file}` }),
-    )
+  loading ??= import('@shopify/react-native-skia/lib/module/web')
+    .then(({ LoadSkiaWeb }) => LoadSkiaWeb({ locateFile: (file: string) => `/${file}` }))
     .then(() => undefined);
   return loading;
 }
@@ -23,16 +21,12 @@ export function prefetchSkia() {
    * state. Started on idle it came 170 ms in and competed with the fonts and the cards; started in
    * full after two seconds it stalled the page while the visitor was looking at it.
    */
-  window.addEventListener("pointerdown", () => void skiaReady(), {
+  window.addEventListener('pointerdown', () => void skiaReady(), {
     once: true,
     capture: true,
   });
-  const warm = () =>
-    void fetch("/canvaskit.wasm", { priority: "low" } as RequestInit).catch(
-      () => {},
-    );
-  const later = () =>
-    void document.fonts.ready.then(() => setTimeout(warm, 2000));
-  if (document.readyState === "complete") later();
-  else window.addEventListener("load", later, { once: true });
+  const warm = () => void fetch('/canvaskit.wasm', { priority: 'low' } as RequestInit).catch(() => {});
+  const later = () => void document.fonts.ready.then(() => setTimeout(warm, 2000));
+  if (document.readyState === 'complete') later();
+  else window.addEventListener('load', later, { once: true });
 }

@@ -27,13 +27,16 @@ import { BLOCK_H, drop, hsl, hue, points, speed, type Block } from './logic';
 const SIDE = 10; // the block's visible right face, for depth
 const TOP = 6; // its visible top face
 
-function faceColour(level: number) {
-  const h = hue(level);
+function faceColour(level: number, offset = 0) {
+  const h = (hue(level) + offset) % 360;
   return { front: hsl(h, 72, 62), side: hsl(h, 72, 42), top: hsl(h, 60, 78) };
 }
 
-export default function StackGame({ width, height, onScore, onEnd, juice }: GameProps) {
-  const baseWidth = Math.round(width * 0.62);
+export default function StackGame({ width, height, onScore, onEnd, juice, daily }: GameProps) {
+  // The daily tower changes the starting width, the speed, the side and the colour; nothing else.
+  const baseWidth = Math.round(width * (daily?.widthFactor ?? 0.62));
+  const pace = daily?.speedFactor ?? 1;
+  const tint = daily?.hueOffset ?? 0;
   const floorY = height - 36; // world y of the bottom of the first block
   const [blocks, setBlocks] = useState<Block[]>([{ x: (width - baseWidth) / 2, w: baseWidth }]);
   const [over, setOver] = useState(false);
@@ -42,10 +45,10 @@ export default function StackGame({ width, height, onScore, onEnd, juice }: Game
   const streak = useRef(0);
 
   // The slider, on the UI thread.
-  const sliderX = useSharedValue(-baseWidth);
+  const sliderX = useSharedValue(daily && !daily.startLeft ? width : -baseWidth);
   const sliderW = useSharedValue(baseWidth);
-  const dir = useSharedValue(1);
-  const velocity = useSharedValue(speed(0, width));
+  const dir = useSharedValue(daily && !daily.startLeft ? -1 : 1);
+  const velocity = useSharedValue(speed(0, width) * pace);
   const running = useSharedValue(true);
   const cameraY = useSharedValue(0);
   const fallT = useSharedValue(1);
@@ -86,7 +89,7 @@ export default function StackGame({ width, height, onScore, onEnd, juice }: Game
 
     // Where the block landed, on screen: its row in the world, moved by the camera.
     const landY = floorY - (level + 1) * BLOCK_H + cameraY.value;
-    const colour = faceColour(level).top;
+    const colour = faceColour(level, tint).top;
 
     if (result.kind === 'perfect') {
       streak.current += 1;
@@ -117,7 +120,7 @@ export default function StackGame({ width, height, onScore, onEnd, juice }: Game
     sliderW.value = result.block.w;
     dir.value = dir.value === 1 ? -1 : 1;
     sliderX.value = dir.value === 1 ? -result.block.w * 0.85 : width - result.block.w * 0.15;
-    velocity.value = speed(next.length, width);
+    velocity.value = speed(next.length, width) * pace;
 
     // The camera climbs once the tower reaches the middle of the screen.
     const towerTop = floorY - next.length * BLOCK_H;
@@ -150,7 +153,7 @@ export default function StackGame({ width, height, onScore, onEnd, juice }: Game
 
   const level = blocks.length;
   const sliderY = floorY - (level + 1) * BLOCK_H;
-  const sliderColour = faceColour(level);
+  const sliderColour = faceColour(level, tint);
   // The slider's width is the last landed block's, so it can be drawn as a block, faces and all.
 
   return (
@@ -162,7 +165,7 @@ export default function StackGame({ width, height, onScore, onEnd, juice }: Game
 
         <Group transform={world}>
           {blocks.map((b, i) => (
-            <Block3D key={i} x={b.x} y={floorY - (i + 1) * BLOCK_H} w={b.w} colour={faceColour(i)} />
+            <Block3D key={i} x={b.x} y={floorY - (i + 1) * BLOCK_H} w={b.w} colour={faceColour(i, tint)} />
           ))}
 
           {falling ? (
@@ -171,7 +174,7 @@ export default function StackGame({ width, height, onScore, onEnd, juice }: Game
                 x={falling.block.x}
                 y={floorY - (falling.level + 1) * BLOCK_H}
                 w={falling.block.w}
-                colour={faceColour(falling.level)}
+                colour={faceColour(falling.level, tint)}
               />
             </Group>
           ) : null}

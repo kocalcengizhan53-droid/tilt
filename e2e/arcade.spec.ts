@@ -45,8 +45,10 @@ test('Stack: a drop scores, a miss ends the run and records a best', async ({ pa
   await openGame(page, 'stack');
   const canvas = page.locator('canvas').first();
   await expect(canvas).toBeVisible();
-  // The first block slides in from the left; drop it once it is over the tower.
-  await page.waitForTimeout(500);
+  // The first block slides in from the left; drop it once it is over the tower. The slider's step
+  // per frame is capped, so on a loaded machine it moves slower in real time: at 500 ms it could
+  // still be short of the tower. At 900 ms it overlaps at full speed and at half.
+  await page.waitForTimeout(900);
   await tapCanvas(page, 150, 400);
   await expect.poll(() => score(page)).toBeGreaterThanOrEqual(1);
   // Drops at the wrong moment eventually miss; keep tapping until the run ends.
@@ -153,4 +155,32 @@ test('reduce motion is a setting, and it is kept', async ({ page }) => {
   await page.reload();
   await expect(page.getByRole('switch', { name: 'Reduce motion' })).toBeChecked();
   await page.getByRole('switch', { name: 'Reduce motion' }).click();
+});
+
+test('the daily tower: one attempt, then the result and a streak on the wall', async ({ page }) => {
+  await page.goto('/');
+  const card = page.getByRole('link', { name: /^Daily tower/ });
+  await expect(card).toHaveAttribute('aria-label', /Not played yet\. 0-day streak/);
+  await card.click();
+  await expect(page.getByText(/one attempt\. It resets at midnight/)).toBeVisible();
+
+  const coin = page.getByRole('button', { name: 'Insert coin' });
+  await expect(coin).toBeVisible({ timeout: 30_000 });
+  await coin.click();
+  await expect(coin).toBeHidden();
+  await page.waitForTimeout(2_100);
+  for (let i = 0; i < 40 && !(await gameOver(page).isVisible()); i++) {
+    await tapCanvas(page, 150, 300);
+    await page.waitForTimeout(450);
+  }
+  await expect(gameOver(page)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play again' })).toHaveCount(0);
+  await expect(page.getByText(/1-day streak · back at midnight/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Cabinet', exact: true }).click();
+  await expect(card).toHaveAttribute('aria-label', /Built today: \d+\. 1-day streak/);
+  // A second visit shows the day's result instead of a coin slot.
+  await card.click();
+  await expect(page.getByText("TODAY'S TOWER").first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Insert coin' })).toHaveCount(0);
 });

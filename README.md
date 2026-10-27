@@ -18,9 +18,9 @@ An offline neon arcade for iOS, Android and the web: six small, complete games o
 
 ## In three seconds
 
-- **Six arcade games in one app**, no network and no account: Stack, Orbit, Breakout, Slide, Trace and Simon, drawn on the GPU with Skia and moved on the UI thread with Reanimated.
+- **Six arcade games in one app**, no network and no account: Stack, Orbit, Breakout, Slide, Trace and Simon, drawn on the GPU with Skia and moved on the UI thread with Reanimated — and a **daily tower**: the same Stack for everyone each day, one attempt, a streak on the wall.
 - **Juice in every game:** sparks, words that pop ("PERFECT ×3"), screen shake and flashes, synthesised sound and haptics — and a reduced-motion setting that keeps the information and drops the movement.
-- **Fast on the web too:** the cabinet scores Lighthouse mobile **91** (median of five runs; accessibility, best practices and SEO 100); a game's first paint went from **21.1 s to 4.6 s** once Skia's 3 MB of WebAssembly stopped blocking the app. Verified in the iOS simulator; 26 Jest tests on the game logic, 20 Playwright checks.
+- **Fast on the web too:** the cabinet scores Lighthouse mobile **91** (median of five runs; accessibility, best practices and SEO 100); a game's first paint went from **21.1 s to 4.6 s** once Skia's 3 MB of WebAssembly stopped blocking the app. Verified in the iOS simulator; 30 Jest tests, 22 Playwright checks, and an axe and Lighthouse gate on every push.
 
 ---
 
@@ -28,6 +28,7 @@ An offline neon arcade for iOS, Android and the web: six small, complete games o
 
 | The problem | What was built | Measured |
 | --- | --- | --- |
+| Nothing to come back for tomorrow | The daily tower: the date seeds the rules (starting width, speed, entry side, colour), so everyone gets the same tower with no server; one attempt, recorded apart from the ordinary best, and a seven-day strip with the streak | Rules tested to be identical per day and in range across a year of dates; the one-attempt rule driven in the browser |
 | Six games that looked like six forms | One visual world: tube lettering, a signature colour per machine, covers drawn in code, a sunset over a grid floor, cards that press and spring back | Own icon and splash; one look from the cabinet to every game-over card |
 | Games that worked but did not feel like anything | A shared juice layer — bursts, floating words, shake, flash — that every game calls at its own moments, plus sound and haptics | Shake, flash and sparks stop under reduced motion; the words stay |
 | On the web, the whole app waited for CanvasKit | The cabinet is in the exported HTML and paints at once; the WebAssembly loads in its own chunk on the first touch or two seconds after the cabinet paints, and a game imports its code only once it is ready | Game first paint **21.1 → 4.6 s**; cabinet paints in under 50 ms, Lighthouse mobile **91** |
@@ -44,7 +45,7 @@ An offline neon arcade for iOS, Android and the web: six small, complete games o
 | **Trace** | Draw a road from the pad to the goal. Let go and the ball rides it. | A Skia path grown under the finger, sampled once into points, ridden by a ball driven by a single eased shared value. Walls to miss, an ink budget that tightens. |
 | **Simon** | Four pads light up. Play it back. | Four synthesised tones, haptics on every pad, a sequence that grows and a comparison that is three lines long. |
 
-Every game's arithmetic lives in a `logic.ts` beside it and runs the same on the UI thread, the JS thread and in Jest. Twenty-six tests prove the cuts, the merges, the bounces and the sequences before any of it is drawn.
+Every game's arithmetic lives in a `logic.ts` beside it and runs the same on the UI thread, the JS thread and in Jest. Twenty-six tests prove the cuts, the merges, the bounces and the sequences before any of it is drawn; four more pin the daily tower's rules, calendar and streak.
 
 ## The cabinet
 
@@ -58,6 +59,18 @@ Skia on the web is CanvasKit, three megabytes of WebAssembly that must be loaded
 
 Two things only the browser suite found: under react-native-web a `Pressable`'s `onPressIn` never fired for a pointer click, so Simon could not be lost; and "Cabinet" from a game opened by deep link, with no history behind it, stayed put. Both fixed, both covered.
 
+## Store listing
+
+Screenshots at the App Store's 6.7-inch size (1290 × 2796, JPEG without alpha), taken from the build itself: [`docs/store`](docs/store).
+
+<p>
+  <img src="docs/store/1-cabinet.jpg" width="150" alt="Store screenshot: the cabinet with the daily tower">
+  <img src="docs/store/2-daily-tower.jpg" width="150" alt="Store screenshot: the daily tower">
+  <img src="docs/store/3-orbit.jpg" width="150" alt="Store screenshot: Orbit">
+  <img src="docs/store/4-breakout.jpg" width="150" alt="Store screenshot: Breakout">
+  <img src="docs/store/5-slide.jpg" width="150" alt="Store screenshot: Slide">
+</p>
+
 ## Running it
 
 Node 24 LTS.
@@ -68,7 +81,7 @@ npm run web          # Expo prints the local URL
 npm run ios          # or android — Expo Go, or a development build
 
 npm run check        # typecheck, lint, Jest, web export
-npm run qa           # exports the web build, serves it, runs 20 Playwright checks (phone and desktop)
+npm run qa           # exports the web build, serves it, runs 22 Playwright checks (phone and desktop)
 npm run deploy       # ships the web build to Cloudflare Pages
 ```
 

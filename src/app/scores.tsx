@@ -4,12 +4,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GAMES, gameById } from '@/features/arcade/catalogue';
 import { DISPLAY, NeonText, textGlow } from '@/features/arcade/neon';
+import { useDaily } from '@/lib/daily';
 import { useScores } from '@/lib/scores';
 
 
 export default function ScoresScreen() {
   const insets = useSafeAreaInsets();
-  const { best, recent, reset } = useScores();
+  const { best, recent, reset: resetScores } = useScores();
+  const resetDaily = useDaily((d) => d.reset);
+  // One button clears everything kept on the device, the daily towers included.
+  const reset = () => {
+    resetScores();
+    resetDaily();
+  };
 
   return (
     <View role="main" className="flex-1 bg-background" style={{ paddingTop: insets.top + 8 }}>

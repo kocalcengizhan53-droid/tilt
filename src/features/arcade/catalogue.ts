@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 
 import type { Juice } from '@/features/arcade/juice';
+import type { DailyRules } from '@/features/daily/daily';
 
 /**
  * The machines on the wall.
@@ -24,6 +25,8 @@ export type GameProps = {
   height: number;
   /** Sparks, words, shake and flash, drawn by the shell over the game's own area. */
   juice: Juice;
+  /** Today's rules when this is the daily tower; only Stack reads them. */
+  daily?: DailyRules;
 };
 
 export type GameMeta = {
