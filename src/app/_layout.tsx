@@ -3,6 +3,7 @@ import '@/global.css';
 import { useEffect } from 'react';
 import { useFonts, Bungee_400Regular } from '@expo-google-fonts/bungee';
 import { Stack } from 'expo-router';
+import { Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -22,8 +23,10 @@ export default function RootLayout() {
   }, [loaded, failed]);
 
   // On iOS a Text drawn before its font is registered keeps the system face for good, so nothing
-  // is drawn until the face is in (or has failed to load); the splash covers the wait.
-  if (!loaded && !failed) return null;
+  // is drawn until the face is in (or has failed to load); the splash covers the wait. The web
+  // swaps the face in when it lands, and holding back there left the exported HTML empty, so the
+  // first paint waited for half a megabyte of JavaScript.
+  if (Platform.OS !== 'web' && !loaded && !failed) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0b0414' }}>

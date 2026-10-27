@@ -20,7 +20,7 @@ An offline neon arcade for iOS, Android and the web: six small, complete games o
 
 - **Six arcade games in one app**, no network and no account: Stack, Orbit, Breakout, Slide, Trace and Simon, drawn on the GPU with Skia and moved on the UI thread with Reanimated.
 - **Juice in every game:** sparks, words that pop ("PERFECT ×3"), screen shake and flashes, synthesised sound and haptics — and a reduced-motion setting that keeps the information and drops the movement.
-- **Fast on the web too:** the cabinet scores Lighthouse mobile **92** (accessibility, best practices and SEO 100); a game's first paint went from **21.1 s to 4.5 s** once Skia's 3 MB of WebAssembly stopped blocking the app. Verified in the iOS simulator; 26 Jest tests on the game logic, 20 Playwright checks.
+- **Fast on the web too:** the cabinet scores Lighthouse mobile **91** (median of five runs; accessibility, best practices and SEO 100); a game's first paint went from **21.1 s to 4.6 s** once Skia's 3 MB of WebAssembly stopped blocking the app. Verified in the iOS simulator; 26 Jest tests on the game logic, 20 Playwright checks.
 
 ---
 
@@ -30,7 +30,7 @@ An offline neon arcade for iOS, Android and the web: six small, complete games o
 | --- | --- | --- |
 | Six games that looked like six forms | One visual world: tube lettering, a signature colour per machine, covers drawn in code, a sunset over a grid floor, cards that press and spring back | Own icon and splash; one look from the cabinet to every game-over card |
 | Games that worked but did not feel like anything | A shared juice layer — bursts, floating words, shake, flash — that every game calls at its own moments, plus sound and haptics | Shake, flash and sparks stop under reduced motion; the words stay |
-| On the web, the whole app waited for CanvasKit | The app starts at once; the WebAssembly loads in its own chunk, the cabinet prefetches it when idle, and a game imports its code only once it is ready | Game first paint **21.1 → 4.5 s**; cabinet Lighthouse mobile **92** |
+| On the web, the whole app waited for CanvasKit | The cabinet is in the exported HTML and paints at once; the WebAssembly loads in its own chunk on the first touch or two seconds after the cabinet paints, and a game imports its code only once it is ready | Game first paint **21.1 → 4.6 s**; cabinet paints in under 50 ms, Lighthouse mobile **91** |
 | iOS drew neon glows as boxes and showed system fonts | Glow split by platform (stacked copies on iOS), fonts loaded before the first frame | Checked on an iPhone simulator, not only in a browser |
 
 ## The machines
@@ -54,7 +54,7 @@ Nothing leaves the device. Scores and settings live in SQLite's key-value store 
 
 ## On the web
 
-Skia on the web is CanvasKit, three megabytes of WebAssembly that must be loaded before any module importing Skia is evaluated. The cabinet does not draw with Skia, so [`index.web.tsx`](index.web.tsx) starts the app at once; [`src/lib/skia-ready.web.ts`](src/lib/skia-ready.web.ts) — itself a separate chunk — is prefetched while the player is choosing, and a game's chunk is imported only after it resolves. The static export has one HTML page per route, a document with its own title, description and share image, and a fallback for deep links, so `/play/orbit` opens the game cold.
+Skia on the web is CanvasKit, three megabytes of WebAssembly that must be loaded before any module importing Skia is evaluated. The cabinet does not draw with Skia, so [`index.web.tsx`](index.web.tsx) starts the app at once; [`src/lib/skia-ready.web.ts`](src/lib/skia-ready.web.ts) — itself a separate chunk — is fetched on the first touch or two seconds after the cabinet has painted in its own type, and a game's chunk is imported only after it resolves. The fonts are awaited before the first frame only on iOS, where a face registered late is never applied; on the web the exported HTML carries the cabinet itself. The static export has one HTML page per route, a document with its own title, description and share image, and a fallback for deep links, so `/play/orbit` opens the game cold.
 
 Two things only the browser suite found: under react-native-web a `Pressable`'s `onPressIn` never fired for a pointer click, so Simon could not be lost; and "Cabinet" from a game opened by deep link, with no history behind it, stayed put. Both fixed, both covered.
 
