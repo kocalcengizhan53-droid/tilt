@@ -6,15 +6,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GAMES } from '@/features/arcade/catalogue';
 import { GameCard } from '@/features/arcade/GameCard';
 import { Backdrop, MONO, NeonText } from '@/features/arcade/neon';
+import { useMotion } from '@/lib/motion';
 import { useScores } from '@/lib/scores';
 import { prefetchSkia } from '@/lib/skia-ready';
 import { DailyCard } from '@/features/daily/DailyCard';
+import { useTilt } from '@/lib/tilt';
 
 /** The cabinet: a lit sign, six machines two to a row, and the way to the scores and the switches. */
 export default function CabinetScreen() {
   const insets = useSafeAreaInsets();
   const best = useScores((s) => s.best);
   const rows = [GAMES.slice(0, 2), GAMES.slice(2, 4), GAMES.slice(4, 6)];
+  // One lean for the whole wall: the phone's on a device, the pointer's on a desktop.
+  const { reduced } = useMotion();
+  const tilt = useTilt(!reduced);
 
   // The games draw with Skia; on the web that is a WebAssembly download. Start it while the
   // player is choosing, so the first game opens without waiting.
@@ -61,7 +66,7 @@ export default function CabinetScreen() {
         {rows.map((row, r) => (
           <View key={r} className="flex-row gap-3">
             {row.map((meta, i) => (
-              <GameCard key={meta.id} meta={meta} best={best[meta.id] ?? 0} index={r * 2 + i} />
+              <GameCard key={meta.id} meta={meta} best={best[meta.id] ?? 0} index={r * 2 + i} tilt={tilt} />
             ))}
           </View>
         ))}

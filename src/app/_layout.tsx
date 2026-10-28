@@ -10,6 +10,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Glass } from '@/features/arcade/neon';
+import { useDaily } from '@/lib/daily';
+import { useScores } from '@/lib/scores';
+import { useSettings } from '@/lib/settings';
+import { readAfterHydration } from '@/lib/storage';
 
 // The splash is the cabinet's own background with nothing on it, so holding it while the sign's
 // typeface loads looks like the room before the lights come on.
@@ -18,6 +22,13 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 /** The arcade is one dark room; every screen is a stack card over it, all under one sheet of glass. */
 export default function RootLayout() {
   const [loaded, failed] = useFonts({ Bungee_400Regular });
+  // The browser's saved scores and switches, read once the exported page is React's.
+  useEffect(() => {
+    if (!readAfterHydration) return;
+    useScores.getState().hydrate();
+    useDaily.getState().hydrate();
+    useSettings.getState().hydrate();
+  }, []);
   useEffect(() => {
     if (loaded || failed) SplashScreen.hideAsync().catch(() => {});
   }, [loaded, failed]);

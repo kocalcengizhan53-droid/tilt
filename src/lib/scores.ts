@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { readJson, writeJson } from '@/lib/storage';
+import { initialJson, isSaved, readJson, writeJson } from '@/lib/storage';
 
 /**
  * High scores. One best per game and the last few runs, kept on the device: there is no
@@ -14,10 +14,13 @@ type Scores = {
   /** Records a finished run and says whether it is a new best. */
   record(game: string, score: number): { best: number; isNew: boolean };
   reset(): void;
+  /** Reads what is saved; on the web, called once the exported page has hydrated. */
+  hydrate(): void;
 };
 
 const KEY = 'tilt.scores';
-const saved = readJson<{ best: Record<string, number>; recent: Run[] }>(KEY, { best: {}, recent: [] });
+const EMPTY = { best: {}, recent: [] };
+const saved = initialJson<{ best: Record<string, number>; recent: Run[] }>(KEY, EMPTY);
 
 export const useScores = create<Scores>((set, get) => ({
   ...saved,
@@ -33,5 +36,8 @@ export const useScores = create<Scores>((set, get) => ({
   reset: () => {
     set({ best: {}, recent: [] });
     writeJson(KEY, { best: {}, recent: [] });
+  },
+  hydrate: () => {
+    if (isSaved(KEY)) set(readJson(KEY, EMPTY));
   },
 }));

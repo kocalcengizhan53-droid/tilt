@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { readJson, writeJson } from '@/lib/storage';
+import { initialJson, isSaved, readJson, writeJson } from '@/lib/storage';
 
 /**
  * The daily towers played, by day: one attempt each, the first result stands. On the device,
@@ -11,12 +11,14 @@ type Daily = {
   /** Records today's run; false if the day was already played. */
   record(day: string, score: number): boolean;
   reset(): void;
+  /** Reads what is saved; on the web, called once the exported page has hydrated. */
+  hydrate(): void;
 };
 
 const KEY = 'tilt.daily';
 
 export const useDaily = create<Daily>((set, get) => ({
-  history: readJson<Record<string, number>>(KEY, {}),
+  history: initialJson<Record<string, number>>(KEY, {}),
   record: (day, score) => {
     if (day in get().history) return false;
     const history = { ...get().history, [day]: score };
@@ -27,5 +29,8 @@ export const useDaily = create<Daily>((set, get) => ({
   reset: () => {
     set({ history: {} });
     writeJson(KEY, {});
+  },
+  hydrate: () => {
+    if (isSaved(KEY)) set({ history: readJson<Record<string, number>>(KEY, {}) });
   },
 }));

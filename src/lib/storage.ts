@@ -59,3 +59,18 @@ export function readJson<T>(key: string, fallback: T): T {
 export function writeJson(key: string, value: unknown) {
   storage.set(key, JSON.stringify(value));
 }
+
+/*
+ * The web build is exported as static HTML rendered with nothing saved, so a browser that has
+ * scores must first render exactly that and only then read them, or React rejects the page it
+ * was handed (hydration error #418). A device has no exported HTML and reads at startup.
+ */
+export const readAfterHydration = Platform.OS === 'web';
+
+/** What a store starts with: the saved value on a device, the default in a browser until hydrated. */
+export function initialJson<T>(key: string, fallback: T): T {
+  return readAfterHydration ? fallback : readJson(key, fallback);
+}
+
+/** Whether anything is saved under a key: a store with nothing saved need not re-render to say so. */
+export const isSaved = (key: string) => storage.get(key) !== null;
