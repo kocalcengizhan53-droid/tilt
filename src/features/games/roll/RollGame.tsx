@@ -123,7 +123,11 @@ export default function RollGame({ width, height, onScore, onEnd, juice, run }: 
   };
 
   useFrameCallback((info) => {
-    const dt = Math.min(0.033, (info.timeSincePreviousFrame ?? 16) / 1000);
+    const elapsed = (info.timeSincePreviousFrame ?? 16) / 1000;
+    // The marble steps at most 33 ms at a time, so a slow frame cannot fling it through a hole;
+    // the clock counts real seconds, so a slow phone does not get a longer run.
+    const dt = Math.min(0.033, elapsed);
+    const real = Math.min(0.25, elapsed);
     clock.value += dt;
     if (sinking.value > 0) {
       sinking.value = Math.min(1, sinking.value + dt * 2.6);
@@ -174,7 +178,7 @@ export default function RollGame({ width, height, onScore, onEnd, juice, run }: 
       // Parked out of reach until React places the next one, so it cannot be caught twice.
       light.value = { x: -1000, y: -1000 };
     }
-    time.value -= dt;
+    time.value -= real;
     if (time.value <= 0) {
       time.value = 0;
       running.value = false;

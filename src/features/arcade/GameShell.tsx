@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentType } from 'react';
-import { Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown, FadeOut, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -248,11 +248,19 @@ function CountUp({ to, colour }: { to: number; colour: string }) {
   );
 }
 
+/*
+ * No exit animation on the web: Reanimated plays it by putting the node back into its parent
+ * and removing it when the animation ends, and when the overlay leaves with its whole screen —
+ * "Cabinet" on the game-over card — that parent is already gone, so the removal throws
+ * (`removeChild … not a child of this node`). A slower machine (the CI runner) hit it every time.
+ */
+const OVERLAY_EXIT = Platform.OS === 'web' ? undefined : FadeOut.duration(150);
+
 function Overlay({ children, dim = true }: { children: React.ReactNode; dim?: boolean }) {
   return (
     <Animated.View
       entering={FadeIn.duration(200)}
-      exiting={FadeOut.duration(150)}
+      exiting={OVERLAY_EXIT}
       style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: dim ? 'rgba(11,4,20,0.82)' : 'transparent' }}
     >
       {children}

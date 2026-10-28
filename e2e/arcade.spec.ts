@@ -142,7 +142,7 @@ test('Roll: the marble rolls to the pointer, catches the light, and the clock ru
   await page.mouse.up();
   await page.mouse.move(box.x + 4, box.y + 4);
   // Nothing else caught, the twelve seconds and the bonus run down and the run ends.
-  await expect(gameOver(page)).toBeVisible({ timeout: 25_000 });
+  await expect(gameOver(page)).toBeVisible({ timeout: 30_000 });
 });
 
 test('Orbit: a release leaves the orbit and the run ends or scores', async ({ page }) => {
