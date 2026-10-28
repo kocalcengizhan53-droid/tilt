@@ -1,8 +1,10 @@
 # Tilt
 
-An offline neon arcade for iOS, Android and the web: six small, complete games on one lit wall — each with one idea and one technique drawn properly, and the feedback that makes a game feel like a machine rather than a form.
+An offline neon arcade for iOS, Android and the web: seven small, complete games on one lit wall — each with one idea and one technique drawn properly, and the feedback that makes a game feel like a machine rather than a form.
 
 **Play it in a browser:** <https://tilt-arcade-77n.pages.dev> — the same code ships to iOS and Android through Expo.
+
+**For your product:** the mobile MVP for your idea — one codebase for iPhone, Android and the web, native feel (sensors, haptics, sound, 60 fps animation), offline-first storage, and the polish that makes people keep it on their home screen.
 
 <p>
   <img src="docs/cabinet.webp" width="190" alt="The cabinet: six machines on a neon wall above a sunset and a grid floor">
@@ -18,7 +20,8 @@ An offline neon arcade for iOS, Android and the web: six small, complete games o
 
 ## In three seconds
 
-- **Six arcade games in one app**, no network and no account: Stack, Orbit, Breakout, Slide, Trace and Simon, drawn on the GPU with Skia and moved on the UI thread with Reanimated — and a **daily tower**: the same Stack for everyone each day, one attempt, a streak on the wall.
+- **Roll, played by tilting the phone:** the gravity sensor is read on the UI thread and levelled to however you hold it, the marble chases the light while holes open and pull; on a computer it rolls toward the pointer. The cabinet's cards lean with the phone too.
+- **Seven arcade games in one app**, no network and no account: Roll, Stack, Orbit, Breakout, Slide, Trace and Simon, drawn on the GPU with Skia and moved on the UI thread with Reanimated — and a **daily tower**: the same Stack for everyone each day, one attempt, a streak on the wall.
 - **Juice in every game:** sparks, words that pop ("PERFECT ×3"), screen shake and flashes, synthesised sound and haptics — and a reduced-motion setting that keeps the information and drops the movement.
 - **Fast on the web too:** the cabinet scores Lighthouse mobile **91** (median of five runs; accessibility, best practices and SEO 100); a game's first paint went from **21.1 s to 4.6 s** once Skia's 3 MB of WebAssembly stopped blocking the app. Verified in the iOS simulator; 30 Jest tests, 22 Playwright checks, and an axe and Lighthouse gate on every push.
 

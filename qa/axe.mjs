@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 
 const BASE = (process.env.QA_URL ?? 'http://localhost:4180').replace(/\/$/, '');
 const AXE = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
-const PAGES = ['/', '/scores', '/settings', '/play/stack'];
+const PAGES = ['/', '/scores', '/settings', '/play/stack', '/play/roll'];
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa', 'best-practice'];
 
 const browser = await chromium.launch({ channel: 'chrome' });

@@ -64,7 +64,7 @@ export function GameCard({
             {/* Always wrapped, live or not: swapping the parent would remount the picture after
                 hydration, and a picture painted late becomes the page's largest paint. */}
             <Animated.View style={[{ flex: 1 }, depth]}>
-              <Cover id={meta.id} hex={meta.hex} />
+              <Cover id={meta.id} hex={meta.hex} tilt={tilt} />
             </Animated.View>
           </LinearGradient>
           <View style={{ paddingHorizontal: 14, paddingBottom: 14, paddingTop: 6, gap: 4 }}>

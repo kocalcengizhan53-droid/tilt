@@ -12,11 +12,14 @@ import { prefetchSkia } from '@/lib/skia-ready';
 import { DailyCard } from '@/features/daily/DailyCard';
 import { useTilt } from '@/lib/tilt';
 
-/** The cabinet: a lit sign, six machines two to a row, and the way to the scores and the switches. */
+/**
+ * The cabinet: a lit sign, the daily tower, the tilting machine across the full width, six more
+ * two to a row, and the way to the scores and the switches.
+ */
 export default function CabinetScreen() {
   const insets = useSafeAreaInsets();
   const best = useScores((s) => s.best);
-  const rows = [GAMES.slice(0, 2), GAMES.slice(2, 4), GAMES.slice(4, 6)];
+  const rows = [GAMES.slice(0, 1), GAMES.slice(1, 3), GAMES.slice(3, 5), GAMES.slice(5, 7)];
   // One lean for the whole wall: the phone's on a device, the pointer's on a desktop.
   const { reduced } = useMotion();
   const tilt = useTilt(!reduced);
@@ -66,7 +69,7 @@ export default function CabinetScreen() {
         {rows.map((row, r) => (
           <View key={r} className="flex-row gap-3">
             {row.map((meta, i) => (
-              <GameCard key={meta.id} meta={meta} best={best[meta.id] ?? 0} index={r * 2 + i} tilt={tilt} />
+              <GameCard key={meta.id} meta={meta} best={best[meta.id] ?? 0} index={r === 0 ? 0 : r * 2 - 1 + i} tilt={tilt} />
             ))}
           </View>
         ))}
@@ -74,7 +77,7 @@ export default function CabinetScreen() {
             the line carries its own ground rather than hoping to land on the sky. */}
         <View style={footer}>
           <Text style={{ fontFamily: MONO, fontSize: 11, letterSpacing: 2, color: '#cdbfe6' }}>
-            6 GAMES · NO NETWORK · NO ACCOUNT
+            {GAMES.length} GAMES · NO NETWORK · NO ACCOUNT
           </Text>
         </View>
       </ScrollView>

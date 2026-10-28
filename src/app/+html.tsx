@@ -1,3 +1,5 @@
+import { Bungee_400Regular } from '@expo-google-fonts/bungee';
+import { Asset } from 'expo-asset';
 import { ScrollViewStyleReset, useServerDocumentContext } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
@@ -6,8 +8,14 @@ import type { PropsWithChildren } from 'react';
  * background from the first byte, so there is no white flash before the cabinet draws.
  */
 const TITLE = 'Tilt — an offline neon arcade';
-const DESCRIPTION = 'Six arcade games in one offline app — Stack, Orbit, Breakout, Slide, Trace and Simon — drawn with Skia and Reanimated, with sound, haptics and a lot of neon.';
+const DESCRIPTION = 'Seven arcade games in one offline app — Roll, played by tilting the phone, then Stack, Orbit, Breakout, Slide, Trace and Simon — drawn with Skia and Reanimated, with sound, haptics and a lot of neon.';
 const URL = 'https://tilt-arcade-77n.pages.dev';
+/*
+ * The display face, asked for by the document rather than by the app once its JavaScript runs.
+ * Requested late, the font sat behind the bundles on the page's critical path, and Lighthouse's
+ * simulation put the first paint at 2.5 s or 4.2 s depending on which way it read the chain.
+ */
+const DISPLAY_FONT = Asset.fromModule(Bungee_400Regular).uri;
 
 export default function Root({ children }: PropsWithChildren) {
   // Expo hands over the nodes it needs in the document: fonts and styles for the head, the
@@ -32,8 +40,13 @@ export default function Root({ children }: PropsWithChildren) {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
+        <link rel="preload" href={DISPLAY_FONT} as="font" type="font/ttf" crossOrigin="" />
         <ScrollViewStyleReset />
-        <style dangerouslySetInnerHTML={{ __html: 'html, body { background: #0b0414; }' }} />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `html, body { background: #0b0414; } @font-face { font-family: Bungee_400Regular; src: url(${DISPLAY_FONT}) format('truetype'); font-display: swap; }`,
+          }}
+        />
         {headNodes}
       </head>
       <body {...bodyAttributes}>

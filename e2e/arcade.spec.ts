@@ -7,7 +7,7 @@ import { expect, test } from './fixtures';
  * see the score move or the run end — with nothing logged to the console on the way.
  */
 
-const GAMES = ['Stack', 'Orbit', 'Breakout', 'Slide', 'Trace', 'Simon'] as const;
+const GAMES = ['Roll', 'Stack', 'Orbit', 'Breakout', 'Slide', 'Trace', 'Simon'] as const;
 
 async function openGame(page: Page, id: string) {
   await page.goto(`/play/${id}`);
@@ -30,7 +30,7 @@ const tapCanvas = async (page: Page, x: number, y: number) => {
   await page.mouse.click(box.x + x, box.y + y);
 };
 
-test('the cabinet shows six machines and reaches each one', async ({ page }) => {
+test('the cabinet shows seven machines and reaches each one', async ({ page }) => {
   await page.goto('/');
   for (const name of GAMES) {
     await expect(page.getByRole('link', { name: new RegExp(`^${name}\\.`) })).toBeVisible();
@@ -96,6 +96,53 @@ test('Breakout: the paddle follows a drag and the ball serves', async ({ page })
   await page.waitForTimeout(2500);
   // Either a brick has gone (score) or the ball is still in play; both are fine. No errors is the check.
   expect(await score(page)).toBeGreaterThanOrEqual(0);
+});
+
+/**
+ * Where the light is on the board, found the way a player finds it — by looking: its core is the
+ * one patch of #ffe0b8 on the screen (the marble's highlight runs through other creams).
+ */
+async function findLight(page: Page, clip: { x: number; y: number; width: number; height: number }) {
+  const png = await page.screenshot({ clip });
+  const found = await page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let sx = 0;
+    let sy = 0;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] > 245 && d[i + 1] >= 218 && d[i + 1] <= 230 && d[i + 2] >= 176 && d[i + 2] <= 192) {
+        sx += (i / 4) % c.width;
+        sy += Math.floor(i / 4 / c.width);
+        n += 1;
+      }
+    }
+    return n ? { x: sx / n, y: sy / n, scale: img.width } : null;
+  }, png.toString('base64'));
+  if (!found) return null;
+  const k = clip.width / found.scale;
+  return { x: clip.x + found.x * k, y: clip.y + found.y * k };
+}
+
+test('Roll: the marble rolls to the pointer, catches the light, and the clock runs out', async ({ page }) => {
+  await openGame(page, 'roll');
+  const box = (await page.locator('canvas').first().boundingBox())!;
+  const light = await findLight(page, box);
+  expect(light, 'a light on the board').not.toBeNull();
+  await page.mouse.move(light!.x, light!.y);
+  await page.mouse.down();
+  await expect.poll(() => score(page), { timeout: 8_000 }).toBeGreaterThanOrEqual(1);
+  await page.mouse.up();
+  await page.mouse.move(box.x + 4, box.y + 4);
+  // Nothing else caught, the twelve seconds and the bonus run down and the run ends.
+  await expect(gameOver(page)).toBeVisible({ timeout: 25_000 });
 });
 
 test('Orbit: a release leaves the orbit and the run ends or scores', async ({ page }) => {

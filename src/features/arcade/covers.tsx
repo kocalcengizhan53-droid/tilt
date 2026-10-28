@@ -189,8 +189,39 @@ function Pad({ colour, index, lit }: { colour: string; index: number; lit: Share
   return <Animated.View style={[styles.pad, corner, { backgroundColor: colour }, glow(colour, 12), style]} />;
 }
 
-export function Cover({ id, hex }: { id: GameId; hex: string }) {
+/**
+ * A marble on a tilted board — and on the cabinet the board is the phone: the marble leans with
+ * it (or toward the pointer) on top of its own slow figure of eight.
+ */
+function RollCover({ hex, tilt }: { hex: string; tilt?: Lean }) {
+  const t = useLoop(5200, false);
+  const marble = useAnimatedStyle(() => {
+    const a = t.value * Math.PI * 2;
+    const lx = tilt ? tilt.x.value : 0;
+    const ly = tilt ? tilt.y.value : 0;
+    return { transform: [{ translateX: Math.sin(a) * 56 + lx * 34 }, { translateY: Math.sin(a * 2) * 16 + ly * 18 }] };
+  });
+  const pulse = useAnimatedStyle(() => ({ opacity: 0.55 + 0.45 * Math.sin(t.value * Math.PI * 8) ** 2 }));
+  return (
+    <View style={[styles.fill, styles.centre]}>
+      <View style={[styles.rollBoard, { borderColor: `${hex}66` }]}>
+        <View style={[styles.rollHole, { left: '22%', top: '58%' }]} />
+        <View style={[styles.rollHole, { left: '70%', top: '20%' }]} />
+        <Animated.View style={[styles.rollLight, { left: '78%', top: '62%' }, glow(hex, 14), pulse]} />
+      </View>
+      <Animated.View style={[styles.rollMarble, { backgroundColor: hex }, glow(hex, 16), marble]}>
+        <View style={styles.rollShine} />
+      </Animated.View>
+    </View>
+  );
+}
+
+type Lean = { x: SharedValue<number>; y: SharedValue<number> };
+
+export function Cover({ id, hex, tilt }: { id: GameId; hex: string; tilt?: Lean }) {
   switch (id) {
+    case 'roll':
+      return <RollCover hex={hex} tilt={tilt} />;
     case 'stack':
       return <StackCover hex={hex} />;
     case 'orbit':
@@ -228,5 +259,10 @@ const styles = StyleSheet.create({
   goal: { position: 'absolute', width: 20, height: 28, borderWidth: 2, borderRadius: 4, marginLeft: -10 },
   simon: { width: 90, height: 90, flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center', justifyContent: 'center' },
   pad: { width: 42, height: 42, borderRadius: 6 },
+  rollBoard: { position: 'absolute', left: 14, right: 14, top: 10, bottom: 10, borderWidth: 1, borderRadius: 10 },
+  rollHole: { position: 'absolute', width: 24, height: 24, borderRadius: 12, marginLeft: -12, marginTop: -12, backgroundColor: '#000000', borderWidth: 1.5, borderColor: '#ff5c7aaa' },
+  rollLight: { position: 'absolute', width: 14, height: 14, borderRadius: 7, marginLeft: -7, marginTop: -7, backgroundColor: '#ffe0b8' },
+  rollMarble: { width: 22, height: 22, borderRadius: 11, alignItems: 'flex-start', justifyContent: 'flex-start' },
+  rollShine: { width: 8, height: 8, borderRadius: 4, marginLeft: 4, marginTop: 3, backgroundColor: '#ffffffcc' },
   simonHub: { position: 'absolute', width: 26, height: 26, borderRadius: 13, backgroundColor: '#0b0414', borderWidth: 2, borderColor: '#34245a' },
 });

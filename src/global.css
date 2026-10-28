@@ -23,6 +23,7 @@
       --color-neon-amber: #ffd23f;
       --color-neon-violet: #b26bff;
       --color-neon-coral: #ff5c7a;
+      --color-neon-orange: #ff8a3d;
     }
     @variant dark {
       --color-background: #0b0414;
@@ -37,9 +38,10 @@
       --color-neon-amber: #ffd23f;
       --color-neon-violet: #b26bff;
       --color-neon-coral: #ff5c7a;
+      --color-neon-orange: #ff8a3d;
     }
   }
 }
 
 /* Game colours are chosen at runtime from the catalogue; Tailwind has to be told they exist. */
-@source inline("{text,bg,border}-neon-{cyan,magenta,lime,amber,violet,coral}");
+@source inline("{text,bg,border}-neon-{cyan,magenta,lime,amber,violet,coral,orange}");

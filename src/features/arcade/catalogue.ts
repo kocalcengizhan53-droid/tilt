@@ -10,7 +10,7 @@ import type { DailyRules } from '@/features/daily/daily';
  * the only place that knows all of them: the cabinet draws its cards from here, the play
  * route loads a game from here, the score table names them from here.
  */
-export type GameId = 'stack' | 'orbit' | 'breakout' | 'slide' | 'trace' | 'simon';
+export type GameId = 'roll' | 'stack' | 'orbit' | 'breakout' | 'slide' | 'trace' | 'simon';
 
 /** What every game gets from the shell, and the one thing it has to give back. */
 export type GameProps = {
@@ -38,13 +38,23 @@ export type GameMeta = {
   /** The technique it exists to show. */
   technique: string;
   /** A Uniwind colour class fragment: `neon-cyan` → `bg-neon-cyan`, `text-neon-cyan`. */
-  colour: 'neon-cyan' | 'neon-magenta' | 'neon-lime' | 'neon-amber' | 'neon-violet' | 'neon-coral';
+  colour: 'neon-cyan' | 'neon-magenta' | 'neon-lime' | 'neon-amber' | 'neon-violet' | 'neon-coral' | 'neon-orange';
   /** The same colour as a hex, for canvases that cannot read a class. */
   hex: string;
   load: () => Promise<{ default: ComponentType<GameProps> }>;
 };
 
 export const GAMES: readonly GameMeta[] = [
+  {
+    id: 'roll',
+    title: 'Roll',
+    tagline: 'Tilt the phone. Catch the light.',
+    howTo: 'Tilt to roll the marble into the light — each one adds time. Hold the phone however is comfortable; that is level. Every second light opens a hole, and holes pull. On a computer, point where it should roll, or use the arrow keys.',
+    technique: 'Gravity sensor read on the UI thread · levelled to your grip · holes that pull',
+    colour: 'neon-orange',
+    hex: '#ff8a3d',
+    load: () => import('@/features/games/all').then((m) => ({ default: m.games.roll })),
+  },
   {
     id: 'stack',
     title: 'Stack',
